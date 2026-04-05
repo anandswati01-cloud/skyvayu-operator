@@ -292,8 +292,8 @@ textarea.field-input{height:80px;padding:10px 14px;resize:vertical;}
     </div>
 
     <div class="operator-card">
-      <div class="op-name" id="sidebar-name">Ã¢ÂÂ</div>
-      <div class="op-role" id="sidebar-role">Ã¢ÂÂ</div>
+      <div class="op-name" id="sidebar-name"> | </div>
+      <div class="op-role" id="sidebar-role"> | </div>
       <div class="op-online">Online</div>
     </div>
 
@@ -392,7 +392,7 @@ textarea.field-input{height:80px;padding:10px 14px;resize:vertical;}
     <!-- Booking Confirmed + Rostering -->
     <div id="tab-confirmed" style="display:none;">
       <div class="main-header">
-        <div class="page-title">Booking confirmed Ã¢ÂÂ Rostering</div>
+        <div class="page-title">Booking confirmed  |  Rostering</div>
       </div>
       <div class="main-content">
         <div id="confirmed-roster-list"><div class="loading">Loading...</div></div>
@@ -668,7 +668,7 @@ async function loadDashboard() {
 }
 
 function fmtDate(d) {
-  if (!d) return 'Ã¢ÂÂ';
+  if (!d) return ' | ';
   var p = d.split('-');
   if (p.length !== 3) return d;
   return p[2] + '-' + p[1] + '-' + p[0];
@@ -721,7 +721,7 @@ function renderActiveQueries(queries) {
     return;
   }
   el.innerHTML = queries.map(function(q) {
-    var route = q.trip_type === 'multi' ? (q.sectors ? q.sectors.length + ' sectors' : 'Multiple sectors') : (q.departure || 'Ã¢ÂÂ') + ' Ã¢ÂÂ ' + (q.destination || 'Ã¢ÂÂ');
+    var route = q.trip_type === 'multi' ? (q.sectors ? q.sectors.length + ' sectors' : 'Multiple sectors') : (q.departure || ' | ') + ' Ã¢ÂÂ ' + (q.destination || ' | ');
     return '<div class="query-card">'
       + '<div class="query-top">'
       + '<div><div class="query-route">' + route + '</div>'
@@ -756,16 +756,16 @@ function renderQuotedQueries(quotes) {
   }
   el.innerHTML = quotes.map(function(q) {
     var query = q.queries || {};
-    var route = query.trip_type === 'multi' ? 'Multiple sectors' : (query.departure || 'Ã¢ÂÂ') + ' Ã¢ÂÂ ' + (query.destination || 'Ã¢ÂÂ');
+    var route = query.trip_type === 'multi' ? 'Multiple sectors' : (query.departure || ' | ') + ' Ã¢ÂÂ ' + (query.destination || ' | ');
     return '<div class="query-card">'
       + '<div class="query-top">'
       + '<div><div class="query-route">' + route + '</div>'
-      + '<div class="query-meta">' + fmtDate(query.flight_date) + ' Ã&#183; ' + (q.aircraft_type || 'Ã¢ÂÂ') + '</div></div>'
+      + '<div class="query-meta">' + fmtDate(query.flight_date) + ' Ã&#183; ' + (q.aircraft_type || ' | ') + '</div></div>'
       + '<span class="badge badge-quoted">Quoted</span>'
       + '</div>'
       + '<div class="query-details">'
       + '<div class="query-detail"><span>Your quote</span>' + fmtPrice(q.price) + '</div>'
-      + '<div class="query-detail"><span>Pax</span>' + (query.passengers || 'Ã¢ÂÂ') + '</div>'
+      + '<div class="query-detail"><span>Pax</span>' + (query.passengers || ' | ') + '</div>'
       + '</div></div>';
   }).join('');
 }
@@ -779,8 +779,8 @@ function renderSharedQueries() {
   }
   el.innerHTML = shared.map(function(q) {
     var query = q.queries || {};
-    var route = query.trip_type === 'multi' ? 'Multiple sectors' : (query.departure || 'Ã¢ÂÂ') + ' Ã¢ÂÂ ' + (query.destination || 'Ã¢ÂÂ');
-    return '<div class="query-card"><div class="query-top"><div><div class="query-route">' + route + '</div><div class="query-meta">' + fmtDate(query.flight_date) + ' Ã&#183; ' + (q.aircraft_type || 'Ã¢ÂÂ') + '</div></div><span class="badge badge-quoted">Shared</span></div><div class="query-details"><div class="query-detail"><span>Your quote</span>' + fmtPrice(q.price) + '</div><div class="query-detail"><span>Pax</span>' + (query.passengers || 'Ã¢ÂÂ') + '</div></div></div>';
+    var route = query.trip_type === 'multi' ? 'Multiple sectors' : (query.departure || ' | ') + ' Ã¢ÂÂ ' + (query.destination || ' | ');
+    return '<div class="query-card"><div class="query-top"><div><div class="query-route">' + route + '</div><div class="query-meta">' + fmtDate(query.flight_date) + ' Ã&#183; ' + (q.aircraft_type || ' | ') + '</div></div><span class="badge badge-quoted">Shared</span></div><div class="query-details"><div class="query-detail"><span>Your quote</span>' + fmtPrice(q.price) + '</div><div class="query-detail"><span>Pax</span>' + (query.passengers || ' | ') + '</div></div></div>';
   }).join('');
 }
 
@@ -818,15 +818,15 @@ async function loadRoster() {
 
   confirmed.forEach(function(q, i) {
     var query = q.queries || {};
-    var route = query.trip_type === 'multi' ? 'Multiple sectors' : (query.departure || 'Ã¢ÂÂ') + ' Ã¢ÂÂ ' + (query.destination || 'Ã¢ÂÂ');
+    var route = query.trip_type === 'multi' ? 'Multiple sectors' : (query.departure || ' | ') + ' Ã¢ÂÂ ' + (query.destination || ' | ');
     var bg = i % 2 === 0 ? '' : 'background:rgba(0,0,0,0.02);';
     html += '<tr style="border-bottom:0.5px solid var(--border);' + bg + '">'
       + '<td style="padding:13px 20px;color:var(--text);font-weight:500;">' + fmtDate(query.flight_date) + '</td>'
-      + '<td style="padding:13px 12px;color:var(--text-secondary);">' + (query.flight_time || 'Ã¢ÂÂ') + '</td>'
+      + '<td style="padding:13px 12px;color:var(--text-secondary);">' + (query.flight_time || ' | ') + '</td>'
       + '<td style="padding:13px 12px;color:var(--text);">' + route + '</td>'
-      + '<td style="padding:13px 12px;color:var(--text-secondary);">' + (q.aircraft_type || 'Ã¢ÂÂ') + '</td>'
-      + '<td style="padding:13px 12px;color:var(--text-tertiary);font-family:monospace;font-size:12px;">' + (q.aircraft_registration || 'Ã¢ÂÂ') + '</td>'
-      + '<td style="padding:13px 12px;color:var(--text-secondary);">' + (query.passengers || 'Ã¢ÂÂ') + '</td>'
+      + '<td style="padding:13px 12px;color:var(--text-secondary);">' + (q.aircraft_type || ' | ') + '</td>'
+      + '<td style="padding:13px 12px;color:var(--text-tertiary);font-family:monospace;font-size:12px;">' + (q.aircraft_registration || ' | ') + '</td>'
+      + '<td style="padding:13px 12px;color:var(--text-secondary);">' + (query.passengers || ' | ') + '</td>'
       + '<td style="padding:13px 12px;color:var(--gold);font-weight:500;">' + fmtPrice(q.price) + '</td>'
       + '<td style="padding:13px 20px;"><span style="background:var(--green-faint);color:var(--green-light);border:0.5px solid rgba(59,109,17,0.3);font-size:10px;font-weight:500;padding:3px 10px;border-radius:20px;text-transform:uppercase;letter-spacing:.05em;">Confirmed</span></td>'
       + '</tr>';
@@ -840,13 +840,13 @@ async function loadRosterTab() {
   var el = document.getElementById('roster-list');
   el.innerHTML = '<div class="loading">Loading...</div>';
 
-  // Fetch all quotes with query details for this operator
   var res = await sbFetch('quotes?operator_id=eq.' + currentOperator.id + '&select=*,queries(*)&order=created_at.desc');
   var all = res.ok ? res.data : [];
   var confirmed = all.filter(function(q) {
     return q.status === 'accepted' || q.status === 'confirmed' || q.status === 'booked';
   });
 
+  // Use demo flights if no real ones
   if (!confirmed.length) {
     confirmed = [
       { aircraft_type: 'Citation XLS', aircraft_registration: 'VT-SKY', price: 472000,
@@ -864,44 +864,136 @@ async function loadRosterTab() {
     ];
   }
 
-  confirmed.sort(function(a, b) {
-    var da = (a.queries || {}).flight_date || '';
-    var db = (b.queries || {}).flight_date || '';
-    return da.localeCompare(db);
+  // Build a map of date -> flights
+  var flightsByDate = {};
+  confirmed.forEach(function(q) {
+    var d = (q.queries || {}).flight_date || '';
+    if (!flightsByDate[d]) flightsByDate[d] = [];
+    flightsByDate[d].push(q);
   });
 
-  var html = '<div style="background:var(--bg-card);border:0.5px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;">'
-    + '<div style="padding:16px 20px;border-bottom:0.5px solid var(--border);display:flex;align-items:center;justify-content:space-between;">'
-    + '<div style="font-size:13px;font-weight:500;color:var(--text);">Flight roster</div>'
-    + '<div style="font-size:12px;color:var(--text-tertiary);">' + confirmed.length + ' flight' + (confirmed.length !== 1 ? 's' : '') + '</div>'
-    + '</div>'
-    + '<table style="width:100%;border-collapse:collapse;font-size:13px;">'
-    + '<thead><tr style="border-bottom:0.5px solid var(--border);background:var(--bg-secondary);">'
-    + '<th style="padding:10px 20px;text-align:left;font-size:11px;font-weight:500;color:var(--text-tertiary);letter-spacing:.06em;text-transform:uppercase;">Date</th>'
-    + '<th style="padding:10px 12px;text-align:left;font-size:11px;font-weight:500;color:var(--text-tertiary);letter-spacing:.06em;text-transform:uppercase;">Departure</th>'
-    + '<th style="padding:10px 12px;text-align:left;font-size:11px;font-weight:500;color:var(--text-tertiary);letter-spacing:.06em;text-transform:uppercase;">Destination</th>'
-    + '<th style="padding:10px 12px;text-align:left;font-size:11px;font-weight:500;color:var(--text-tertiary);letter-spacing:.06em;text-transform:uppercase;">Time</th>'
-    + '<th style="padding:10px 12px;text-align:left;font-size:11px;font-weight:500;color:var(--text-tertiary);letter-spacing:.06em;text-transform:uppercase;">Aircraft</th>'
-    + '<th style="padding:10px 20px;text-align:left;font-size:11px;font-weight:500;color:var(--text-tertiary);letter-spacing:.06em;text-transform:uppercase;">Reg</th>'
-    + '</tr></thead><tbody>';
+  // Determine month to display (from first flight)
+  var allDates = Object.keys(flightsByDate).sort();
+  var refDate = allDates.length ? new Date(allDates[0] + 'T00:00:00') : new Date();
+  window._calYear = refDate.getFullYear();
+  window._calMonth = refDate.getMonth();
+  window._calFlights = flightsByDate;
 
-  confirmed.forEach(function(q, i) {
-    var query = q.queries || {};
-    var departure = query.trip_type === 'multi' ? 'Multiple' : (query.departure || 'Ã¢ÂÂ');
-    var destination = query.trip_type === 'multi' ? 'sectors' : (query.destination || 'Ã¢ÂÂ');
-    var bg = i % 2 === 0 ? '' : 'background:rgba(0,0,0,0.02);';
-    html += '<tr style="border-bottom:0.5px solid var(--border);' + bg + '">'
-      + '<td style="padding:14px 20px;color:var(--text);font-weight:500;">' + fmtDate(query.flight_date) + '</td>'
-      + '<td style="padding:14px 12px;color:var(--text);">' + departure + '</td>'
-      + '<td style="padding:14px 12px;color:var(--text);">' + destination + '</td>'
-      + '<td style="padding:14px 12px;color:var(--text-secondary);">' + (query.flight_time || 'Ã¢ÂÂ') + '</td>'
-      + '<td style="padding:14px 12px;color:var(--text-secondary);">' + (q.aircraft_type || 'Ã¢ÂÂ') + '</td>'
-      + '<td style="padding:14px 20px;color:var(--gold);font-family:monospace;font-size:12px;font-weight:600;letter-spacing:.04em;">' + (q.aircraft_registration || 'Ã¢ÂÂ') + '</td>'
-      + '</tr>';
+  renderCalendar(window._calYear, window._calMonth, window._calFlights);
+}
+
+function renderCalendar(year, month, flightsByDate) {
+  var el = document.getElementById('roster-list');
+  var monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  var dayNames = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+
+  var firstDay = new Date(year, month, 1).getDay();
+  var daysInMonth = new Date(year, month + 1, 0).getDate();
+  var today = new Date();
+
+  // Aircraft colour palette
+  var acColors = {
+    'Citation XLS':      { bg: 'rgba(196,134,10,0.12)',  border: '#C4860A', text: '#7A5200' },
+    'Hawker 800XP':      { bg: 'rgba(59,109,17,0.12)',   border: '#4A8A14', text: '#2A5800' },
+    'Beechcraft King Air': { bg: 'rgba(24,95,165,0.12)', border: '#3B7ACC', text: '#1A4A8A' },
+    'Falcon 2000':       { bg: 'rgba(140,40,140,0.12)',  border: '#9B2D9B', text: '#6B1D6B' },
+  };
+  function getColor(type) {
+    return acColors[type] || { bg: 'rgba(100,100,100,0.1)', border: '#888', text: '#444' };
+  }
+
+  var html = '<div style="background:var(--bg-card);border:0.5px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;">';
+
+  // Calendar header
+  html += '<div style="display:flex;align-items:center;justify-content:space-between;padding:18px 24px;border-bottom:0.5px solid var(--border);">';
+  html += '<div style="font-family:var(--font-display);font-size:20px;font-weight:300;color:var(--gold);">' + monthNames[month] + ' ' + year + '</div>';
+  html += '<div style="display:flex;gap:8px;">';
+  html += '<button onclick="calNav(-1)" style="width:32px;height:32px;border-radius:50%;background:transparent;border:0.5px solid var(--border-hover);cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--text-secondary);font-size:14px;" title="Previous month">&#8249;</button>';
+  html += '<button onclick="calNav(1)"  style="width:32px;height:32px;border-radius:50%;background:transparent;border:0.5px solid var(--border-hover);cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--text-secondary);font-size:14px;" title="Next month">&#8250;</button>';
+  html += '</div></div>';
+
+  // Day-name row
+  html += '<div style="display:grid;grid-template-columns:repeat(7,1fr);border-bottom:0.5px solid var(--border);">';
+  dayNames.forEach(function(d) {
+    html += '<div style="padding:10px 0;text-align:center;font-size:11px;font-weight:500;color:var(--text-tertiary);letter-spacing:.06em;">' + d + '</div>';
   });
+  html += '</div>';
 
-  html += '</tbody></table></div>';
+  // Calendar grid
+  html += '<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:0;">';
+
+  var cell = 0;
+  // Empty cells before first day
+  for (var i = 0; i < firstDay; i++, cell++) {
+    html += '<div style="min-height:90px;padding:8px;border-right:0.5px solid var(--border);border-bottom:0.5px solid var(--border);background:var(--bg-secondary);opacity:0.5;"></div>';
+  }
+
+  for (var day = 1; day <= daysInMonth; day++, cell++) {
+    var mm = String(month + 1).padStart(2, '0');
+    var dd = String(day).padStart(2, '0');
+    var dateKey = year + '-' + mm + '-' + dd;
+    var flights = flightsByDate[dateKey] || [];
+    var isToday = (day === today.getDate() && month === today.getMonth() && year === today.getFullYear());
+    var isWeekend = ((cell % 7) === 0 || (cell % 7) === 6);
+    var isLast = (cell % 7 === 6);
+
+    var cellBg = isWeekend ? 'var(--bg-secondary)' : 'var(--bg-card)';
+    var dayNumStyle = isToday
+      ? 'width:24px;height:24px;background:var(--gold);color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;'
+      : 'font-size:12px;color:' + (isWeekend ? 'var(--text-tertiary)' : 'var(--text-secondary)') + ';font-weight:' + (flights.length ? '600' : '400') + ';';
+
+    html += '<div style="min-height:90px;padding:6px 8px;border-right:' + (isLast ? 'none' : '0.5px solid var(--border)') + ';border-bottom:0.5px solid var(--border);background:' + cellBg + ';vertical-align:top;">';
+    html += '<div style="margin-bottom:4px;"><span style="' + dayNumStyle + '">' + day + '</span></div>';
+
+    flights.forEach(function(q) {
+      var qr = q.queries || {};
+      var dep = qr.departure || '';
+      var dest = qr.destination || '';
+      var time = qr.flight_time || '';
+      var ac = q.aircraft_type || '';
+      var col = getColor(ac);
+      html += '<div style="background:' + col.bg + ';border-left:2px solid ' + col.border + ';border-radius:3px;padding:3px 6px;margin-bottom:3px;cursor:default;" title="' + dep + ' to ' + dest + ' | ' + ac + ' ' + q.aircraft_registration + ' | ' + time + '">'
+            + '<div style="font-size:10px;font-weight:600;color:' + col.text + ';white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + dep + ' &#8594; ' + dest + '</div>'
+            + '<div style="font-size:9px;color:' + col.text + ';opacity:0.8;">' + time + ' &#183; ' + q.aircraft_registration + '</div>'
+            + '</div>';
+    });
+
+    html += '</div>';
+
+    if (cell % 7 === 6 && day < daysInMonth) {
+      html += '</div><div style="display:grid;grid-template-columns:repeat(7,1fr);gap:0;">';
+    }
+  }
+
+  // Trailing empty cells
+  var remaining = 6 - (cell - 1) % 7;
+  if (remaining < 6) {
+    for (var j = 0; j < remaining; j++) {
+      html += '<div style="min-height:90px;padding:8px;border-right:' + (j === remaining-1 ? 'none' : '0.5px solid var(--border)') + ';border-bottom:0.5px solid var(--border);background:var(--bg-secondary);opacity:0.5;"></div>';
+    }
+  }
+
+  html += '</div>';
+
+  // Legend
+  html += '<div style="padding:14px 24px;border-top:0.5px solid var(--border);display:flex;gap:16px;flex-wrap:wrap;">';
+  Object.keys(acColors).forEach(function(ac) {
+    var col = acColors[ac];
+    html += '<div style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text-secondary);">'
+          + '<div style="width:10px;height:10px;border-radius:2px;background:' + col.bg + ';border:1.5px solid ' + col.border + ';"></div>'
+          + ac + '</div>';
+  });
+  html += '</div>';
+
+  html += '</div>';
   el.innerHTML = html;
+}
+
+function calNav(dir) {
+  window._calMonth += dir;
+  if (window._calMonth > 11) { window._calMonth = 0; window._calYear++; }
+  if (window._calMonth < 0)  { window._calMonth = 11; window._calYear--; }
+  renderCalendar(window._calYear, window._calMonth, window._calFlights);
 }
 
 
@@ -1000,7 +1092,7 @@ async function openQuoteModal(queryId) {
   var query = res.data && res.data[0];
   if (!query) return;
 
-  var route = query.trip_type === 'multi' ? 'Multiple sectors' : (query.departure || 'Ã¢ÂÂ') + ' Ã¢ÂÂ ' + (query.destination || 'Ã¢ÂÂ');
+  var route = query.trip_type === 'multi' ? 'Multiple sectors' : (query.departure || ' | ') + ' Ã¢ÂÂ ' + (query.destination || ' | ');
   document.getElementById('quote-query-info').innerHTML =
     '<strong style="color:var(--text);">' + route + '</strong><br>'
     + (fmtDate(query.flight_date)) + (query.flight_time ? ' at ' + query.flight_time : '') + ' &nbsp;Ã&#183;&nbsp; ' + query.passengers + ' pax';
@@ -1008,7 +1100,7 @@ async function openQuoteModal(queryId) {
   // Populate aircraft dropdown
   var sel = document.getElementById('quote-aircraft');
   sel.innerHTML = '<option value="">Choose aircraft...</option>'
-    + aircraftList.map(function(a){ return '<option value="' + a.id + '" data-type="' + a.aircraft_type + '" data-reg="' + a.registration + '">' + a.aircraft_type + ' Ã¢ÂÂ ' + a.registration + '</option>'; }).join('');
+    + aircraftList.map(function(a){ return '<option value="' + a.id + '" data-type="' + a.aircraft_type + '" data-reg="' + a.registration + '">' + a.aircraft_type + '  |  ' + a.registration + '</option>'; }).join('');
 
   // Reset fields
   ['q-base','q-handling','q-crew','q-catering','q-notes'].forEach(function(id){ document.getElementById(id).value = ''; });
@@ -1123,7 +1215,7 @@ document.querySelectorAll('.modal-overlay').forEach(function(el) {
   });
 });
 
-// Auto-login as Swati Anand Ã¢ÂÂ fetches real IDs from Supabase
+// Auto-login as Swati Anand  |  fetches real IDs from Supabase
 async function init() {
   var userRes = await sbFetch('operator_users?username=eq.swati');
   if (!userRes.ok || !userRes.data || !userRes.data.length) {
