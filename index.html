@@ -263,7 +263,10 @@ textarea.field-input{height:80px;padding:10px 14px;resize:vertical;}
     </div>
     <div class="field-group">
       <label class="field-label">Password</label>
-      <input type="password" class="field-input" id="login-password" placeholder="Enter your password" onkeydown="if(event.key==='Enter')doLogin()"/>
+      <div style="position:relative;">
+        <input type="password" class="field-input" id="login-password" placeholder="Enter your password" onkeydown="if(event.key==='Enter')doLogin()" style="padding-right:48px;width:100%;box-sizing:border-box;"/>
+        <button type="button" id="pw-toggle" onclick="var i=document.getElementById('login-password');var b=document.getElementById('pw-toggle');if(i.type==='password'){i.type='text';b.innerHTML='&#128065;';}else{i.type='password';b.innerHTML='&#128065;&#824;';}" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--text-tertiary);font-size:16px;cursor:pointer;padding:2px 4px;line-height:1;">&#128065;&#824;</button>
+      </div>
     </div>
     <button class="btn-primary" id="login-btn" onclick="doLogin()">Sign in</button>
   </div>
@@ -1197,25 +1200,7 @@ document.querySelectorAll('.modal-overlay').forEach(function(el) {
 
 // Auto-login as Swati Anand  |  fetches real IDs from Supabase
 async function init() {
-  var userRes = await sbFetch('operator_users?username=eq.swati');
-  if (!userRes.ok || !userRes.data || !userRes.data.length) {
-    document.body.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100vh;font-family:sans-serif;color:#C0392B;">Could not connect to database. Please check Supabase is set up correctly.</div>';
-    return;
-  }
-  var user = userRes.data[0];
-  var opRes = await sbFetch('operators?id=eq.' + user.operator_id);
-  if (!opRes.ok || !opRes.data || !opRes.data.length) {
-    document.body.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100vh;font-family:sans-serif;color:#C0392B;">Operator not found in database.</div>';
-    return;
-  }
-  currentUser = user;
-  currentOperator = opRes.data[0];
-
-  document.getElementById('page-dashboard').classList.add('active');
-  document.getElementById('sidebar-name').textContent = user.full_name || 'Swati Anand';
-  document.getElementById('sidebar-role').textContent = currentOperator.company_name + '  | Owner';
-  applyRoleRestrictions();
-  loadDashboard();
+  document.getElementById('page-login').style.display = 'flex';
 }
 init();
 
