@@ -625,7 +625,7 @@ async function doLogin() {
     document.getElementById('page-dashboard').classList.add('active');
     document.getElementById('sidebar-name').textContent = user.full_name || username;
     document.getElementById('sidebar-role').textContent = user.role === 'owner' ? operator.company_name + '  | Owner' : operator.company_name + '  | Sales';
-    if (user.role === 'owner') document.getElementById('nav-employees').style.display = 'flex';
+    applyRoleRestrictions();
 
     loadDashboard();
   } catch(e) {
@@ -647,6 +647,8 @@ function doLogout() {
 }
 
 function showTab(tab) {
+  var isEmployee = currentUser && currentUser.role === 'employee';
+  if (isEmployee && (tab === 'fleet' || tab === 'employees')) return;
   ['active','quoted','shared','confirmed','roster','fleet','employees'].forEach(function(t) {
     var el = document.getElementById('tab-' + t);
     if (el) el.style.display = 'none';
@@ -690,42 +692,64 @@ var allMyQuotes = [];
 
 async function loadQueries() {
   var opId = currentOperator.id;
+  var isEmployee = currentUser && currentUser.role === 'employee';
   var activeRes = await sbFetch('queries?status=eq.open&expires_at=gt.' + new Date().toISOString() + '&order=created_at.desc');
-  var quotesRes = await sbFetch('quotes?operator_id=eq.' + opId + '&select=*,queries(*)&order=created_at.desc');
-
+  var allQuotesRes = await sbFetch('quotes?operator_id=eq.' + opId + '&select=*,queries(*)&order=created_at.desc');
+  var allOperatorQuotes = allQuotesRes.ok ? allQuotesRes.data : [];
   var activeQueries = activeRes.ok ? activeRes.data : [];
-  allMyQuotes = quotesRes.ok ? quotesRes.data : [];
-
-  var quotedQueryIds = allMyQuotes.map(function(q){ return q.query_id; });
-  var unquoted = activeQueries.filter(function(q){ return !quotedQueryIds.includes(q.id); });
-  var pending = allMyQuotes.filter(function(q){ return q.status === 'pending'; });
-  var shared = allMyQuotes.filter(function(q){ return q.status === 'shared'; });
-  var confirmed = allMyQuotes.filter(function(q){ return q.status === 'accepted' || q.status === 'confirmed' || q.status === 'booked'; });
-
-  document.getElementById('stat-active').textContent = unquoted.length;
+  var myQuotes, unquoted, pending, shared, confirmed;
+  if (isEmployee) {
+    myQuotes = allOperatorQuotes.filter(function(q){ return q.submitted_by === currentUser.id; });
+    var myQuotedIds = myQuotes.map(function(q){ return q.query_id; });
+    var othersQuotedIds = allOperatorQuotes.filter(function(q){ return q.submitted_by !== currentUser.id; }).map(function(q){ return q.query_id; });
+    unquoted = activeQueries.filter(function(q){ return !myQuotedIds.includes(q.id); });
+    unquoted.forEach(function(q){ q._locked = othersQuotedIds.includes(q.id); q._lockedBy = null;
+      if(q._locked){ var locker=allOperatorQuotes.find(function(x){return x.query_id===q.id&&x.submitted_by!==currentUser.id;}); q._lockedBy=locker?locker.operator_name||'a colleague':null; }
+    });
+    pending = myQuotes.filter(function(q){ return q.status === 'pending'; });
+    shared = myQuotes.filter(function(q){ return q.status === 'shared'; });
+    confirmed = myQuotes.filter(function(q){ return q.status==='accepted'||q.status==='confirmed'||q.status==='booked'; });
+    allMyQuotes = myQuotes;
+  } else {
+    allMyQuotes = allOperatorQuotes;
+    var quotedIds = allMyQuotes.map(function(q){ return q.query_id; });
+    unquoted = activeQueries.filter(function(q){ return !quotedIds.includes(q.id); });
+    pending = allMyQuotes.filter(function(q){ return q.status === 'pending'; });
+    shared = allMyQuotes.filter(function(q){ return q.status === 'shared'; });
+    confirmed = allMyQuotes.filter(function(q){ return q.status==='accepted'||q.status==='confirmed'||q.status==='booked'; });
+  }
+  var freeCount = unquoted.filter(function(q){ return !q._locked; }).length;
+  document.getElementById('stat-active').textContent = isEmployee ? freeCount : unquoted.length;
   document.getElementById('stat-quoted').textContent = pending.length;
   document.getElementById('stat-confirmed').textContent = confirmed.length;
-  document.getElementById('badge-active').textContent = unquoted.length;
+  document.getElementById('badge-active').textContent = isEmployee ? freeCount : unquoted.length;
   document.getElementById('badge-quoted').textContent = pending.length;
   document.getElementById('badge-shared').textContent = shared.length;
   document.getElementById('badge-confirmed').textContent = confirmed.length;
-
   renderActiveQueries(unquoted);
   renderQuotedQueries(pending);
 }
 
 function renderActiveQueries(queries) {
   var el = document.getElementById('active-queries-list');
-  if (!queries.length) {
+  var free = queries.filter(function(q){ return !q._locked; });
+  var locked = queries.filter(function(q){ return q._locked; });
+  var isEmployee = currentUser && currentUser.role === 'employee';
+
+  if (!free.length && !locked.length) {
     el.innerHTML = '<div class="empty-state"><div class="empty-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#85B7EB" stroke-width="1.5" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div><div class="empty-title">No active queries</div><div class="empty-sub">New client queries will appear here</div></div>';
     return;
   }
-  el.innerHTML = queries.map(function(q) {
-    var route = q.trip_type === 'multi' ? (q.sectors ? q.sectors.length + ' sectors' : 'Multiple sectors') : (q.departure || ' | ') + ' -> ' + (q.destination || ' | ');
+
+  var html = '';
+
+  // Free queries first
+  html += free.map(function(q) {
+    var route = q.trip_type === 'multi' ? (q.sectors ? q.sectors.length + ' sectors' : 'Multiple sectors') : (q.departure || '-') + ' -> ' + (q.destination || '-');
     return '<div class="query-card">'
       + '<div class="query-top">'
       + '<div><div class="query-route">' + route + '</div>'
-      + '<div class="query-meta">' + (q.trip_type === 'oneway' ? 'One way' : q.trip_type === 'return' ? 'Round trip' : 'Multi sector') + '  | ' + fmtDate(q.flight_date) + (q.flight_time ? ' at ' + q.flight_time : '') + '</div></div>'
+      + '<div class="query-meta">' + (q.trip_type==='oneway'?'One way':q.trip_type==='return'?'Round trip':'Multi sector') + ' | ' + fmtDate(q.flight_date) + (q.flight_time?' at '+q.flight_time:'') + '</div></div>'
       + '<span class="badge badge-active">Active</span>'
       + '</div>'
       + '<div class="query-details">'
@@ -735,15 +759,32 @@ function renderActiveQueries(queries) {
       + '</div>'
       + '<div class="query-timer" id="timer-' + q.id + '">' + timeRemaining(q.expires_at) + '</div>'
       + '<div class="query-actions">'
-      + '<button class="btn-sm btn-blue" onclick="openQuoteModal(\'' + q.id + '\')">Submit quote</button>'
+      + '<button class="btn-sm btn-blue" onclick="openQuoteModal('' + q.id + '')">Submit quote</button>'
       + '</div></div>';
   }).join('');
 
+  // Locked queries (claimed by another employee)
+  if (locked.length && isEmployee) {
+    html += locked.map(function(q) {
+      var route = q.trip_type === 'multi' ? 'Multiple sectors' : (q.departure||'-') + ' -> ' + (q.destination||'-');
+      return '<div class="query-card" style="opacity:0.55;">'
+        + '<div class="query-top">'
+        + '<div><div class="query-route">' + route + '</div>'
+        + '<div class="query-meta">' + fmtDate(q.flight_date) + (q.flight_time?' at '+q.flight_time:'') + '</div></div>'
+        + '<span class="badge" style="background:rgba(107,89,64,0.12);color:var(--text-tertiary);border:0.5px solid var(--border);">Claimed</span>'
+        + '</div>'
+        + '<div style="font-size:12px;color:var(--text-tertiary);margin-top:8px;">This query has been taken by a colleague.</div>'
+        + '</div>';
+    }).join('');
+  }
+
+  el.innerHTML = html;
+
   // Live timers
-  queries.forEach(function(q) {
+  free.forEach(function(q) {
     setInterval(function() {
-      var el = document.getElementById('timer-' + q.id);
-      if (el) el.textContent = timeRemaining(q.expires_at);
+      var el2 = document.getElementById('timer-' + q.id);
+      if (el2) el2.textContent = timeRemaining(q.expires_at);
     }, 1000);
   });
 }
@@ -1042,26 +1083,66 @@ async function removeAircraft(id) {
 }
 
 async function loadEmployees() {
-  var res = await sbFetch('operator_users?operator_id=eq.' + currentOperator.id + '&role=eq.employee&order=created_at.asc');
+  var opId = currentOperator.id;
+  var res = await sbFetch('operator_users?operator_id=eq.' + opId + '&role=eq.employee&order=created_at.asc');
   var employees = res.ok ? res.data : [];
+  // Get all quotes to show per-employee activity
+  var quotesRes = await sbFetch('quotes?operator_id=eq.' + opId + '&select=*,queries(*)&order=created_at.desc');
+  var allQuotes = quotesRes.ok ? quotesRes.data : [];
+
   var el = document.getElementById('employees-list');
   if (!employees.length) {
     el.innerHTML = '<div class="empty-state"><div class="empty-title">No employees added</div><div class="empty-sub">Create accounts for your sales team</div></div>';
     return;
   }
+
   el.innerHTML = employees.map(function(e) {
     var initials = (e.full_name || e.username).split(' ').map(function(w){ return w[0]; }).join('').substring(0,2).toUpperCase();
-    var isRecent = e.last_login && (new Date() - new Date(e.last_login)) < 30 * 60 * 1000;
-    return '<div class="employee-row">'
+    var isOnline = e.last_login && (new Date() - new Date(e.last_login)) < 30 * 60 * 1000;
+    var empQuotes = allQuotes.filter(function(q){ return q.submitted_by === e.id; });
+    var pendingQ = empQuotes.filter(function(q){ return q.status === 'pending'; });
+    var acceptedQ = empQuotes.filter(function(q){ return q.status==='accepted'||q.status==='confirmed'||q.status==='booked'; });
+
+    var activityHtml = '';
+    if (empQuotes.length) {
+      activityHtml = '<div style="margin-top:10px;padding-top:10px;border-top:0.5px solid var(--border);">'
+        + '<div style="font-size:10px;font-weight:500;color:var(--text-tertiary);letter-spacing:.06em;text-transform:uppercase;margin-bottom:8px;">Recent quotes</div>'
+        + empQuotes.slice(0,3).map(function(q) {
+            var qr = q.queries || {};
+            var route = (qr.departure||'-') + ' -> ' + (qr.destination||'-');
+            var statusColor = q.status==='pending'?'var(--amber)':q.status==='shared'?'var(--text-secondary)':'var(--green-light)';
+            var statusLabel = q.status==='pending'?'Quoted':q.status==='shared'?'Shared':'Confirmed';
+            return '<div style="display:flex;align-items:center;justify-content:space-between;padding:5px 0;">'
+              + '<div><div style="font-size:12px;color:var(--text);">' + route + '</div>'
+              + '<div style="font-size:11px;color:var(--text-tertiary);">' + fmtDate(qr.flight_date) + ' &middot; ' + fmtPrice(q.price) + '</div></div>'
+              + '<span style="font-size:10px;font-weight:500;color:' + statusColor + ';">' + statusLabel + '</span>'
+              + '</div>';
+          }).join('')
+        + '</div>'
+        + '<div style="display:flex;gap:16px;margin-top:8px;">'
+        + '<div style="font-size:11px;color:var(--text-tertiary);">'
+        + '<span style="font-weight:600;color:var(--amber);">' + pendingQ.length + '</span> quoted &nbsp;'
+        + '<span style="font-weight:600;color:var(--green-light);">' + acceptedQ.length + '</span> confirmed'
+        + '</div>'
+        + '</div>';
+    } else {
+      activityHtml = '<div style="font-size:11px;color:var(--text-tertiary);margin-top:8px;">No quotes submitted yet</div>';
+    }
+
+    return '<div class="employee-row" style="flex-direction:column;align-items:flex-start;">'
+      + '<div style="display:flex;align-items:center;justify-content:space-between;width:100%;">'
       + '<div class="employee-info">'
       + '<div class="employee-avatar">' + initials + '</div>'
       + '<div><div class="employee-name">' + (e.full_name || e.username) + '</div>'
       + '<div class="employee-username">@' + e.username + '</div></div>'
       + '</div>'
       + '<div class="employee-status">'
-      + '<div class="status-dot ' + (isRecent ? 'status-online' : 'status-offline') + '"></div>'
-      + '<span style="color:var(--text-tertiary)">' + (isRecent ? 'Online' : e.last_login ? 'Last seen ' + new Date(e.last_login).toLocaleDateString() : 'Never logged in') + '</span>'
-      + '</div></div>';
+      + '<div class="status-dot ' + (isOnline ? 'status-online' : 'status-offline') + '"></div>'
+      + '<span style="color:var(--text-tertiary)">' + (isOnline ? 'Online now' : e.last_login ? 'Last seen ' + new Date(e.last_login).toLocaleDateString() : 'Never logged in') + '</span>'
+      + '</div>'
+      + '</div>'
+      + activityHtml
+      + '</div>';
   }).join('');
 }
 
@@ -1216,6 +1297,21 @@ document.querySelectorAll('.modal-overlay').forEach(function(el) {
 });
 
 // Auto-login as Swati Anand  |  fetches real IDs from Supabase
+
+function applyRoleRestrictions() {
+  var isEmployee = currentUser && currentUser.role === 'employee';
+  // Hide fleet + employees nav for employees
+  var navFleet = document.querySelector('[onclick="showTab('fleet')"]');
+  var navEmp = document.getElementById('nav-employees');
+  if (isEmployee) {
+    if (navFleet) navFleet.style.display = 'none';
+    if (navEmp) navEmp.style.display = 'none';
+  } else {
+    if (navFleet) navFleet.style.display = 'flex';
+    if (navEmp) navEmp.style.display = 'flex';
+  }
+}
+
 async function init() {
   var userRes = await sbFetch('operator_users?username=eq.swati');
   if (!userRes.ok || !userRes.data || !userRes.data.length) {
@@ -1233,11 +1329,11 @@ async function init() {
 
   document.getElementById('page-dashboard').classList.add('active');
   document.getElementById('sidebar-name').textContent = user.full_name || 'Swati Anand';
-  document.getElementById('sidebar-role').textContent = currentOperator.company_name + '  | Owner';
-  document.getElementById('nav-employees').style.display = 'flex';
+  document.getElementById('sidebar-role').textContent = currentOperator.company_name + (user.role === 'owner' ? ' | Owner' : ' | Sales');
+
+  // Role-based UI restrictions
+  applyRoleRestrictions();
+
   loadDashboard();
 }
 init();
-</script>
-</body>
-</html>
