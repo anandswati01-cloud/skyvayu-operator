@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8"/>
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
 <title>SkyVayu | Operator Portal</title>
 <style>
@@ -580,6 +581,11 @@ textarea.field-input{height:80px;padding:10px 14px;resize:vertical;}
 
 <script>
 var SUPABASE_URL = 'https://bkumggqijgxyfotpbcni.supabase.co';
+// EmailJS config - replace with your values from emailjs.com
+var EMAILJS_PUBLIC_KEY  = 'YOUR_EMAILJS_PUBLIC_KEY';
+var EMAILJS_SERVICE_ID  = 'YOUR_SERVICE_ID';
+var EMAILJS_OTP_TEMPLATE     = 'YOUR_OTP_TEMPLATE_ID';
+var EMAILJS_QUERY_TEMPLATE   = 'YOUR_QUERY_TEMPLATE_ID';
 var SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJrdW1nZ3Fpamd4eWZvdHBiY25pIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUzMTIwOTYsImV4cCI6MjA5MDg4ODA5Nn0.AS1JMDGmMPoQh07--yw3QsHYQF4wIiiOCCEpOYOOQcM';
 
 var currentUser = null;
@@ -654,20 +660,71 @@ async function doLogin() {
 }
 
 async function sendOtpEmail(user, code) {
-  if (!user.email) { console.log('[OTP for testing]', code); return; }
+  if (!user.email) { console.log('[OTP - no email on file]:', code); return; }
   try {
     await fetch('https://api.emailjs.com/api/v1.0/email/send', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        service_id: 'skyvayu_service', template_id: 'skyvayu_otp', user_id: 'EMAILJS_KEY',
+        service_id: EMAILJS_SERVICE_ID,
+        template_id: EMAILJS_OTP_TEMPLATE,
+        user_id: EMAILJS_PUBLIC_KEY,
         template_params: {
-          to_name: user.full_name || user.username, to_email: user.email,
-          otp_code: code, portal_url: 'https://skyvayu-operator.vercel.app'
+          to_name:    user.full_name || user.username,
+          to_email:   user.email,
+          otp_code:   code,
+          portal_url: 'https://skyvayu-operator.vercel.app',
+          subject:    'Your SkyVayu login code: ' + code
         }
       })
     });
+    console.log('OTP email sent to', user.email);
   } catch(e) { console.warn('OTP email failed:', e.message); }
+}
+
+async function sendQueryNotification(query) {
+  // Get operator's notification email
+  try {
+    var opRes = await sbFetch('operators?id=eq.' + currentOperator.id);
+    var op = opRes.ok && opRes.data && opRes.data[0];
+    var notifEmail = op && op.notification_email;
+    if (!notifEmail) { console.log('[Query notification - no email set]'); return; }
+
+    var route = query.trip_type === 'multi'
+      ? 'Multiple sectors'
+      : (query.departure || '-') + ' to ' + (query.destination || '-');
+    var message = 'New charter query received!
+
+'
+      + 'Route: ' + route + '
+'
+      + 'Date: ' + (query.flight_date || '-') + (query.flight_time ? ' at ' + query.flight_time : '') + '
+'
+      + 'Passengers: ' + (query.passengers || '-') + '
+'
+      + 'Trip type: ' + (query.trip_type || '-') + '
+
+'
+      + 'Log in to view and submit a quote before it expires.';
+
+    await fetch('https://api.emailjs.com/api/v1.0/email/send', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        service_id: EMAILJS_SERVICE_ID,
+        template_id: EMAILJS_QUERY_TEMPLATE,
+        user_id: EMAILJS_PUBLIC_KEY,
+        template_params: {
+          to_name:    op.company_name || 'Operator',
+          to_email:   notifEmail,
+          subject:    'New query: ' + route + ' on ' + (query.flight_date || ''),
+          message:    message,
+          portal_url: 'https://skyvayu-operator.vercel.app'
+        }
+      })
+    });
+    console.log('Query notification sent to', notifEmail);
+  } catch(e) { console.warn('Query notification failed:', e.message); }
 }
 
 function verifyOtp() {
@@ -763,6 +820,8 @@ var allMyQuotes = [];
 async function loadQueries() {
   var opId=currentOperator.id, isEmployee=currentUser&&currentUser.role==='employee';
   var aRes=await sbFetch('queries?status=eq.open&expires_at=gt.'+new Date().toISOString()+'&order=created_at.desc');
+  // Notify on new queries (owner only, once per session per query)
+  if (!window._notifiedQueries) window._notifiedQueries = {};
   var qRes=await sbFetch('quotes?operator_id=eq.'+opId+'&select=*,queries(*)&order=created_at.desc');
   var allQ=qRes.ok?qRes.data:[]; var aq=aRes.ok?aRes.data:[];
   var mq,uq,pq,sq,cq;
