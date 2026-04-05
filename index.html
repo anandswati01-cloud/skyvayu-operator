@@ -37,7 +37,7 @@
 html{scroll-behavior:smooth}
 body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh;font-size:14px;line-height:1.6}
 
-/* Ã¢ÂÂÃ¢ÂÂ Login Page Ã¢ÂÂÃ¢ÂÂ */
+/* -- Login Page -- */
 #page-login{display:none;min-height:100vh;align-items:center;justify-content:center;background:var(--bg);padding:24px;}
 .login-box{background:var(--bg-card);border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:40px 36px;width:100%;max-width:400px;}
 .login-logo{margin-bottom:28px;text-align:center;}
@@ -58,7 +58,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 .login-error{background:var(--red-faint);border:0.5px solid rgba(226,75,74,0.3);border-radius:var(--radius);padding:10px 14px;font-size:13px;color:var(--red);margin-bottom:16px;display:none;}
 .login-error.show{display:block;}
 
-/* Ã¢ÂÂÃ¢ÂÂ Main Layout Ã¢ÂÂÃ¢ÂÂ */
+/* -- Main Layout -- */
 #page-dashboard{display:none;}
 #page-dashboard.active{display:flex;min-height:100vh;}
 
@@ -99,7 +99,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 .page-title{font-family:var(--font-display);font-size:26px;font-weight:300;color:var(--gold);padding-bottom:20px;}
 .main-content{padding:24px 28px;}
 
-/* Ã¢ÂÂÃ¢ÂÂ Cards Ã¢ÂÂÃ¢ÂÂ */
+/* -- Cards -- */
 .stat-row{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:24px;}
 .stat-card{background:var(--bg-card);border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:18px 20px;}
 .stat-num{font-family:var(--font-display);font-size:32px;font-weight:300;color:var(--gold);line-height:1;}
@@ -113,7 +113,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 .card-title{font-size:13px;font-weight:500;color:var(--text);}
 .card-body{padding:20px;}
 
-/* Ã¢ÂÂÃ¢ÂÂ Query Cards Ã¢ÂÂÃ¢ÂÂ */
+/* -- Query Cards -- */
 .query-card{background:var(--bg-card);border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:18px 20px;margin-bottom:12px;transition:border-color .2s;}
 .query-card:hover{border-color:var(--border-hover);}
 .query-top{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:12px;}
@@ -135,7 +135,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 .btn-outline-sm{background:transparent;border:0.5px solid var(--border-hover);color:var(--text-secondary);}
 .btn-outline-sm:hover{border-color:var(--blue-border);color:var(--blue-light);}
 
-/* Ã¢ÂÂÃ¢ÂÂ Quote Modal Ã¢ÂÂÃ¢ÂÂ */
+/* -- Quote Modal -- */
 .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:200;align-items:center;justify-content:center;padding:24px;}
 .modal-overlay.open{display:flex;}
 .modal{background:var(--bg-card);border:0.5px solid var(--border-hover);border-radius:var(--radius-lg);width:100%;max-width:560px;max-height:90vh;overflow-y:auto;}
@@ -159,7 +159,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 .total-value{font-size:20px;font-weight:500;color:var(--gold);font-family:var(--font-display);}
 .gst-row{font-size:12px;color:var(--text-tertiary);text-align:right;margin-top:-4px;}
 
-/* Ã¢ÂÂÃ¢ÂÂ Aircraft Tab Ã¢ÂÂÃ¢ÂÂ */
+/* -- Aircraft Tab -- */
 .aircraft-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:16px;}
 .aircraft-card{background:var(--bg-card);border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:18px 20px;position:relative;}
 .aircraft-type{font-size:15px;font-weight:500;color:var(--text);margin-bottom:4px;}
@@ -170,7 +170,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 .btn-add{display:flex;align-items:center;gap:8px;height:42px;padding:0 18px;background:transparent;border:0.5px dashed var(--border-hover);border-radius:var(--radius);color:var(--text-secondary);font-size:13px;font-family:var(--font);cursor:pointer;transition:all .2s;width:100%;margin-top:4px;}
 .btn-add:hover{border-color:var(--blue-border);color:var(--blue-light);}
 
-/* Ã¢ÂÂÃ¢ÂÂ Employees Tab Ã¢ÂÂÃ¢ÂÂ */
+/* -- Employees Tab -- */
 .employee-row{display:flex;align-items:center;justify-content:space-between;padding:14px 0;border-bottom:0.5px solid var(--border);}
 .employee-row:last-child{border-bottom:none;}
 .employee-info{display:flex;align-items:center;gap:12px;}
@@ -182,21 +182,21 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 .status-online{background:var(--green-light);}
 .status-offline{background:var(--text-tertiary);}
 
-/* Ã¢ÂÂÃ¢ÂÂ Empty State Ã¢ÂÂÃ¢ÂÂ */
+/* -- Empty State -- */
 .empty-state{text-align:center;padding:48px 24px;}
 .empty-icon{width:48px;height:48px;border-radius:50%;background:var(--bg-card);border:0.5px solid var(--border);display:flex;align-items:center;justify-content:center;margin:0 auto 16px;}
 .empty-title{font-size:15px;font-weight:500;color:var(--text);margin-bottom:6px;}
 .empty-sub{font-size:13px;color:var(--text-tertiary);}
 
-/* Ã¢ÂÂÃ¢ÂÂ Tabs Ã¢ÂÂÃ¢ÂÂ */
+/* -- Tabs -- */
 .tab-row{display:flex;gap:4px;margin-bottom:20px;background:rgba(0,0,0,0.05);border-radius:var(--radius);padding:4px;}
 .tab-btn{flex:1;height:34px;background:transparent;border:none;border-radius:6px;color:var(--text-secondary);font-size:12px;font-weight:500;font-family:var(--font);cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:6px;}
 .tab-btn.active{background:var(--bg-card);color:var(--text);box-shadow:0 1px 4px rgba(0,0,0,0.2);}
 
-/* Ã¢ÂÂÃ¢ÂÂ Loading Ã¢ÂÂÃ¢ÂÂ */
+/* -- Loading -- */
 .loading{text-align:center;padding:40px;color:var(--text-tertiary);font-size:13px;}
 
-/* Ã¢ÂÂÃ¢ÂÂ Toast Ã¢ÂÂÃ¢ÂÂ */
+/* -- Toast -- */
 .toast{position:fixed;bottom:24px;right:24px;background:var(--bg-card);border:0.5px solid var(--border-hover);border-radius:var(--radius);padding:12px 18px;font-size:13px;color:var(--text);z-index:300;transform:translateY(80px);opacity:0;transition:all .3s;}
 .toast.show{transform:translateY(0);opacity:1;}
 .toast.success{border-color:rgba(59,109,17,0.5);color:var(--green-light);}
@@ -204,7 +204,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 
 textarea.field-input{height:80px;padding:10px 14px;resize:vertical;}
 
-/* Ã¢ÂÂÃ¢ÂÂ Roster / Calendar Ã¢ÂÂÃ¢ÂÂ */
+/* -- Roster / Calendar -- */
 .calendar-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;}
 .calendar-month{font-family:var(--font-display);font-size:20px;font-weight:300;color:var(--text);}
 .cal-nav{display:flex;gap:8px;}
@@ -230,7 +230,7 @@ textarea.field-input{height:80px;padding:10px 14px;resize:vertical;}
 .crew-field input:focus{border-color:var(--gold);}
 .roster-save{text-align:right;}
 
-/* Ã¢ÂÂÃ¢ÂÂ Roster Ã¢ÂÂÃ¢ÂÂ */
+/* -- Roster -- */
 .roster-card{background:var(--bg-card);border:0.5px solid var(--border);border-radius:var(--radius-lg);margin-bottom:16px;overflow:hidden;}
 .roster-flight{padding:18px 20px;border-bottom:0.5px solid var(--border);display:flex;align-items:flex-start;justify-content:space-between;gap:16px;}
 .roster-route{font-size:16px;font-weight:500;color:var(--text);}
@@ -247,7 +247,7 @@ textarea.field-input{height:80px;padding:10px 14px;resize:vertical;}
 </head>
 <body>
 
-<!-- Ã¢ÂÂÃ¢ÂÂ Login Page Ã¢ÂÂÃ¢ÂÂ -->
+<!-- -- Login Page -- -->
 <div id="page-login">
   <div class="login-box">
     <div class="login-logo">
@@ -269,7 +269,7 @@ textarea.field-input{height:80px;padding:10px 14px;resize:vertical;}
   </div>
 </div>
 
-<!-- Ã¢ÂÂÃ¢ÂÂ Dashboard Ã¢ÂÂÃ¢ÂÂ -->
+<!-- -- Dashboard -- -->
 <div id="page-dashboard">
 
   <!-- Sidebar -->
@@ -444,12 +444,12 @@ textarea.field-input{height:80px;padding:10px 14px;resize:vertical;}
   </div>
 </div>
 
-<!-- Ã¢ÂÂÃ¢ÂÂ Quote Modal Ã¢ÂÂÃ¢ÂÂ -->
+<!-- -- Quote Modal -- -->
 <div class="modal-overlay" id="quote-modal">
   <div class="modal">
     <div class="modal-header">
       <span class="modal-title">Submit quote</span>
-      <button class="modal-close" onclick="closeModal('quote-modal')">ÃÂ</button>
+      <button class="modal-close" onclick="closeModal('quote-modal')">&times;</button>
     </div>
     <div class="modal-body">
       <div id="quote-query-info" style="background:rgba(255,255,255,0.03);border-radius:var(--radius);padding:12px 14px;margin-bottom:20px;font-size:13px;color:var(--text-secondary);"></div>
@@ -463,19 +463,19 @@ textarea.field-input{height:80px;padding:10px 14px;resize:vertical;}
 
       <div class="charge-grid">
         <div class="field-group">
-          <label class="field-label">Base charge (Ã¢ÂÂ¹)</label>
+          <label class="field-label">Base charge (Rs.)</label>
           <input type="number" class="field-input" id="q-base" placeholder="0" oninput="calcQuote()"/>
         </div>
         <div class="field-group">
-          <label class="field-label">Handling fee (Ã¢ÂÂ¹)</label>
+          <label class="field-label">Handling fee (Rs.)</label>
           <input type="number" class="field-input" id="q-handling" placeholder="0" oninput="calcQuote()"/>
         </div>
         <div class="field-group">
-          <label class="field-label">Crew accommodation (Ã¢ÂÂ¹)</label>
+          <label class="field-label">Crew accommodation (Rs.)</label>
           <input type="number" class="field-input" id="q-crew" placeholder="0" oninput="calcQuote()"/>
         </div>
         <div class="field-group">
-          <label class="field-label">Catering (Ã¢ÂÂ¹)</label>
+          <label class="field-label">Catering (Rs.)</label>
           <input type="number" class="field-input" id="q-catering" placeholder="0" oninput="calcQuote()"/>
         </div>
       </div>
@@ -483,15 +483,15 @@ textarea.field-input{height:80px;padding:10px 14px;resize:vertical;}
       <div style="background:var(--bg-secondary);border-radius:var(--radius);padding:14px 16px;border:0.5px solid var(--border);">
         <div class="charge-row">
           <span class="charge-label">Subtotal</span>
-          <span class="charge-value" id="q-subtotal">Ã¢ÂÂ¹0</span>
+          <span class="charge-value" id="q-subtotal">Rs.0</span>
         </div>
         <div class="charge-row">
           <span class="charge-label">GST (18%)</span>
-          <span class="charge-value" id="q-gst">Ã¢ÂÂ¹0</span>
+          <span class="charge-value" id="q-gst">Rs.0</span>
         </div>
         <div class="total-row">
           <span class="total-label">Total quote</span>
-          <span class="total-value" id="q-total">Ã¢ÂÂ¹0</span>
+          <span class="total-value" id="q-total">Rs.0</span>
         </div>
       </div>
 
@@ -507,12 +507,12 @@ textarea.field-input{height:80px;padding:10px 14px;resize:vertical;}
   </div>
 </div>
 
-<!-- Ã¢ÂÂÃ¢ÂÂ Aircraft Modal Ã¢ÂÂÃ¢ÂÂ -->
+<!-- -- Aircraft Modal -- -->
 <div class="modal-overlay" id="aircraft-modal">
   <div class="modal">
     <div class="modal-header">
       <span class="modal-title">Add aircraft</span>
-      <button class="modal-close" onclick="closeModal('aircraft-modal')">ÃÂ</button>
+      <button class="modal-close" onclick="closeModal('aircraft-modal')">&times;</button>
     </div>
     <div class="modal-body">
       <div class="field-group">
@@ -535,12 +535,12 @@ textarea.field-input{height:80px;padding:10px 14px;resize:vertical;}
   </div>
 </div>
 
-<!-- Ã¢ÂÂÃ¢ÂÂ Employee Modal Ã¢ÂÂÃ¢ÂÂ -->
+<!-- -- Employee Modal -- -->
 <div class="modal-overlay" id="employee-modal">
   <div class="modal">
     <div class="modal-header">
       <span class="modal-title">Add employee</span>
-      <button class="modal-close" onclick="closeModal('employee-modal')">ÃÂ</button>
+      <button class="modal-close" onclick="closeModal('employee-modal')">&times;</button>
     </div>
     <div class="modal-body">
       <div class="field-group">
@@ -624,7 +624,7 @@ async function doLogin() {
     document.getElementById('page-login').style.display = 'none';
     document.getElementById('page-dashboard').classList.add('active');
     document.getElementById('sidebar-name').textContent = user.full_name || username;
-    document.getElementById('sidebar-role').textContent = user.role === 'owner' ? operator.company_name + ' Ã&#183; Owner' : operator.company_name + ' Ã&#183; Sales';
+    document.getElementById('sidebar-role').textContent = user.role === 'owner' ? operator.company_name + '  | Owner' : operator.company_name + '  | Sales';
     if (user.role === 'owner') document.getElementById('nav-employees').style.display = 'flex';
 
     loadDashboard();
@@ -675,7 +675,7 @@ function fmtDate(d) {
 }
 
 function fmtPrice(n) {
-  return 'Ã¢ÂÂ¹' + Number(n).toLocaleString('en-IN');
+  return 'Rs.' + Number(n).toLocaleString('en-IN');
 }
 
 function timeRemaining(expiresAt) {
@@ -721,11 +721,11 @@ function renderActiveQueries(queries) {
     return;
   }
   el.innerHTML = queries.map(function(q) {
-    var route = q.trip_type === 'multi' ? (q.sectors ? q.sectors.length + ' sectors' : 'Multiple sectors') : (q.departure || ' | ') + ' Ã¢ÂÂ ' + (q.destination || ' | ');
+    var route = q.trip_type === 'multi' ? (q.sectors ? q.sectors.length + ' sectors' : 'Multiple sectors') : (q.departure || ' | ') + ' -> ' + (q.destination || ' | ');
     return '<div class="query-card">'
       + '<div class="query-top">'
       + '<div><div class="query-route">' + route + '</div>'
-      + '<div class="query-meta">' + (q.trip_type === 'oneway' ? 'One way' : q.trip_type === 'return' ? 'Round trip' : 'Multi sector') + ' Ã&#183; ' + fmtDate(q.flight_date) + (q.flight_time ? ' at ' + q.flight_time : '') + '</div></div>'
+      + '<div class="query-meta">' + (q.trip_type === 'oneway' ? 'One way' : q.trip_type === 'return' ? 'Round trip' : 'Multi sector') + '  | ' + fmtDate(q.flight_date) + (q.flight_time ? ' at ' + q.flight_time : '') + '</div></div>'
       + '<span class="badge badge-active">Active</span>'
       + '</div>'
       + '<div class="query-details">'
@@ -756,11 +756,11 @@ function renderQuotedQueries(quotes) {
   }
   el.innerHTML = quotes.map(function(q) {
     var query = q.queries || {};
-    var route = query.trip_type === 'multi' ? 'Multiple sectors' : (query.departure || ' | ') + ' Ã¢ÂÂ ' + (query.destination || ' | ');
+    var route = query.trip_type === 'multi' ? 'Multiple sectors' : (query.departure || ' | ') + ' -> ' + (query.destination || ' | ');
     return '<div class="query-card">'
       + '<div class="query-top">'
       + '<div><div class="query-route">' + route + '</div>'
-      + '<div class="query-meta">' + fmtDate(query.flight_date) + ' Ã&#183; ' + (q.aircraft_type || ' | ') + '</div></div>'
+      + '<div class="query-meta">' + fmtDate(query.flight_date) + '  | ' + (q.aircraft_type || ' | ') + '</div></div>'
       + '<span class="badge badge-quoted">Quoted</span>'
       + '</div>'
       + '<div class="query-details">'
@@ -779,8 +779,8 @@ function renderSharedQueries() {
   }
   el.innerHTML = shared.map(function(q) {
     var query = q.queries || {};
-    var route = query.trip_type === 'multi' ? 'Multiple sectors' : (query.departure || ' | ') + ' Ã¢ÂÂ ' + (query.destination || ' | ');
-    return '<div class="query-card"><div class="query-top"><div><div class="query-route">' + route + '</div><div class="query-meta">' + fmtDate(query.flight_date) + ' Ã&#183; ' + (q.aircraft_type || ' | ') + '</div></div><span class="badge badge-quoted">Shared</span></div><div class="query-details"><div class="query-detail"><span>Your quote</span>' + fmtPrice(q.price) + '</div><div class="query-detail"><span>Pax</span>' + (query.passengers || ' | ') + '</div></div></div>';
+    var route = query.trip_type === 'multi' ? 'Multiple sectors' : (query.departure || ' | ') + ' -> ' + (query.destination || ' | ');
+    return '<div class="query-card"><div class="query-top"><div><div class="query-route">' + route + '</div><div class="query-meta">' + fmtDate(query.flight_date) + '  | ' + (q.aircraft_type || ' | ') + '</div></div><span class="badge badge-quoted">Shared</span></div><div class="query-details"><div class="query-detail"><span>Your quote</span>' + fmtPrice(q.price) + '</div><div class="query-detail"><span>Pax</span>' + (query.passengers || ' | ') + '</div></div></div>';
   }).join('');
 }
 
@@ -818,7 +818,7 @@ async function loadRoster() {
 
   confirmed.forEach(function(q, i) {
     var query = q.queries || {};
-    var route = query.trip_type === 'multi' ? 'Multiple sectors' : (query.departure || ' | ') + ' Ã¢ÂÂ ' + (query.destination || ' | ');
+    var route = query.trip_type === 'multi' ? 'Multiple sectors' : (query.departure || ' | ') + ' -> ' + (query.destination || ' | ');
     var bg = i % 2 === 0 ? '' : 'background:rgba(0,0,0,0.02);';
     html += '<tr style="border-bottom:0.5px solid var(--border);' + bg + '">'
       + '<td style="padding:13px 20px;color:var(--text);font-weight:500;">' + fmtDate(query.flight_date) + '</td>'
@@ -1007,7 +1007,7 @@ async function loadFleet() {
   }
   grid.innerHTML = aircraftList.map(function(a) {
     return '<div class="aircraft-card">'
-      + '<button class="aircraft-remove" onclick="removeAircraft(\'' + a.id + '\')">ÃÂ</button>'
+      + '<button class="aircraft-remove" onclick="removeAircraft(\'' + a.id + '\')">&times;</button>'
       + '<div class="aircraft-type">' + a.aircraft_type + '</div>'
       + '<div class="aircraft-reg">' + a.registration + '</div>'
       + (a.seats ? '<div class="aircraft-seats">' + a.seats + ' seats</div>' : '')
@@ -1092,10 +1092,10 @@ async function openQuoteModal(queryId) {
   var query = res.data && res.data[0];
   if (!query) return;
 
-  var route = query.trip_type === 'multi' ? 'Multiple sectors' : (query.departure || ' | ') + ' Ã¢ÂÂ ' + (query.destination || ' | ');
+  var route = query.trip_type === 'multi' ? 'Multiple sectors' : (query.departure || ' | ') + ' -> ' + (query.destination || ' | ');
   document.getElementById('quote-query-info').innerHTML =
     '<strong style="color:var(--text);">' + route + '</strong><br>'
-    + (fmtDate(query.flight_date)) + (query.flight_time ? ' at ' + query.flight_time : '') + ' &nbsp;Ã&#183;&nbsp; ' + query.passengers + ' pax';
+    + (fmtDate(query.flight_date)) + (query.flight_time ? ' at ' + query.flight_time : '') + ' &nbsp; |&nbsp; ' + query.passengers + ' pax';
 
   // Populate aircraft dropdown
   var sel = document.getElementById('quote-aircraft');
@@ -1233,7 +1233,7 @@ async function init() {
 
   document.getElementById('page-dashboard').classList.add('active');
   document.getElementById('sidebar-name').textContent = user.full_name || 'Swati Anand';
-  document.getElementById('sidebar-role').textContent = currentOperator.company_name + ' Ã&#183; Owner';
+  document.getElementById('sidebar-role').textContent = currentOperator.company_name + '  | Owner';
   document.getElementById('nav-employees').style.display = 'flex';
   loadDashboard();
 }
