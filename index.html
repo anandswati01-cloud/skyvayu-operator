@@ -1273,18 +1273,15 @@ init();
 
 function applyRoleRestrictions(){
   var isEmp = currentUser && currentUser.role === 'employee';
-  var navFleet  = document.querySelector('[onclick="showTab('fleet')"]');
-  var navEmp    = document.getElementById('nav-employees');
-  var navRoster = document.querySelector('[onclick="showTab('roster')"]');
-  if(isEmp){
-    if(navFleet)  navFleet.style.display  = 'none';
-    if(navEmp)    navEmp.style.display    = 'none';
-    if(navRoster) navRoster.style.display = 'none';
-  }else{
-    if(navFleet)  navFleet.style.display  = 'flex';
-    if(navEmp)    navEmp.style.display    = 'flex';
-    if(navRoster) navRoster.style.display = 'flex';
-  }
+  // Hide/show nav items based on role
+  var allNavItems = document.querySelectorAll('.nav-item');
+  allNavItems.forEach(function(el){
+    var oc = el.getAttribute('onclick') || '';
+    var isRestricted = oc.indexOf('fleet') > -1 || oc.indexOf('employees') > -1 || oc.indexOf('roster') > -1;
+    var navId = el.id || '';
+    if(navId === 'nav-employees') isRestricted = true;
+    if(isRestricted) el.style.display = isEmp ? 'none' : 'flex';
+  });
 }
 </script>
 </body>
