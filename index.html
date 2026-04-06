@@ -687,19 +687,10 @@ async function sendQueryNotification(query) {
     var route = query.trip_type === 'multi'
       ? 'Multiple sectors'
       : (query.departure || '-') + ' to ' + (query.destination || '-');
-    var message = 'New charter query received!
+    var message = 'Route: ' + route + '\n\nDate: ' + (query.flight_date || '-') + (query.flight_time ? ' at ' + query.flight_time : '') + '
+\nPassengers: ' + (query.passengers || '-') + '\n\nTrip type: ' + (query.trip_type || '-') + '
 
-'
-      + 'Route: ' + route + '
-'
-      + 'Date: ' + (query.flight_date || '-') + (query.flight_time ? ' at ' + query.flight_time : '') + '
-'
-      + 'Passengers: ' + (query.passengers || '-') + '
-'
-      + 'Trip type: ' + (query.trip_type || '-') + '
-
-'
-      + 'Log in to view and submit a quote before it expires.';
+\nLog in to view and submit a quote before it expires.';
 
     await fetch('https://api.emailjs.com/api/v1.0/email/send', {
       method: 'POST',
