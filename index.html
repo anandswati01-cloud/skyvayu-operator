@@ -677,21 +677,13 @@ async function sendOtpSms(user, code) {
 }
 
 async function sendQueryNotification(query) {
-  // Get operator's notification email
   try {
     var opRes = await sbFetch('operators?id=eq.' + currentOperator.id);
     var op = opRes.ok && opRes.data && opRes.data[0];
     var notifEmail = op && op.notification_email;
     if (!notifEmail) { console.log('[Query notification - no email set]'); return; }
-
-    var route = query.trip_type === 'multi'
-      ? 'Multiple sectors'
-      : (query.departure || '-') + ' to ' + (query.destination || '-');
-    var message = 'Route: ' + route + '\n\nDate: ' + (query.flight_date || '-') + (query.flight_time ? ' at ' + query.flight_time : '') + '
-\nPassengers: ' + (query.passengers || '-') + '\n\nTrip type: ' + (query.trip_type || '-') + '
-
-\nLog in to view and submit a quote before it expires.';
-
+    var route = query.trip_type === 'multi' ? 'Multiple sectors' : (query.departure || '-') + ' to ' + (query.destination || '-');
+    var message = 'New query: ' + route + '. Date: ' + (query.flight_date || '-') + (query.flight_time ? ' at ' + query.flight_time : '') + '. Pax: ' + (query.passengers || '-') + '. Log in to quote before it expires.';
     await fetch('https://api.emailjs.com/api/v1.0/email/send', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -700,10 +692,10 @@ async function sendQueryNotification(query) {
         template_id: EMAILJS_QUERY_TEMPLATE,
         user_id: EMAILJS_PUBLIC_KEY,
         template_params: {
-          to_name:    op.company_name || 'Operator',
-          to_email:   notifEmail,
-          subject:    'New query: ' + route + ' on ' + (query.flight_date || ''),
-          message:    message,
+          to_name: op.company_name || 'Operator',
+          to_email: notifEmail,
+          subject: 'New query: ' + route,
+          message: message,
           portal_url: 'https://skyvayu-operator.vercel.app'
         }
       })
@@ -711,43 +703,6 @@ async function sendQueryNotification(query) {
     console.log('Query notification sent to', notifEmail);
   } catch(e) { console.warn('Query notification failed:', e.message); }
 }
-
-function verifyOtp() {
-  var entered = (document.getElementById('otp-input').value || '').trim();
-  var errEl   = document.getElementById('login-error');
-  errEl.classList.remove('show');
-  if (entered.length !== 6) { errEl.textContent = 'Enter the 6-digit code'; errEl.classList.add('show'); return; }
-  if (entered !== _otpCode)  { errEl.textContent = 'Incorrect code. Try again.'; errEl.classList.add('show'); document.getElementById('otp-input').value=''; return; }
-
-  _otpCode = null;
-  currentUser     = _otpUser;
-  currentOperator = _otpOperator;
-
-  sbFetch('operator_users?id=eq.' + currentUser.id, { method:'PATCH', body:{ last_login: new Date().toISOString() } });
-
-  document.getElementById('page-login').style.display   = 'none';
-  document.getElementById('page-dashboard').classList.add('active');
-  document.getElementById('sidebar-name').textContent   = currentUser.full_name || currentUser.username;
-  document.getElementById('sidebar-role').textContent   = currentOperator.company_name + (currentUser.role==='owner' ? ' | Owner' : ' | Sales');
-  applyRoleRestrictions();
-  loadDashboard();
-
-  document.getElementById('otp-section').style.display = 'none';
-  document.getElementById('login-btn').style.display   = 'block';
-  document.getElementById('otp-input').value = '';
-  document.getElementById('login-username').value = '';
-  document.getElementById('login-password').value = '';
-}
-
-function resendOtp() {
-  if (!_otpUser) return;
-  _otpCode = String(Math.floor(100000 + Math.random() * 900000));
-  sendOtpSms(_otpUser, _otpCode);
-  document.getElementById('otp-hint').textContent = 'New code sent!';
-  document.getElementById('otp-input').value = '';
-  document.getElementById('otp-input').focus();
-}
-
 
 async function toggleAllQuotes(queryId, btn) {
   var container = document.getElementById('allquotes-' + queryId);
