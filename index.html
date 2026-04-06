@@ -758,6 +758,87 @@ function resendOtp() {
 }
 
 
+async function toggleAllQuotes(queryId, btn) {
+  var container = document.getElementById('allquotes-' + queryId);
+  if (!container) return;
+  if (container.style.display !== 'none') {
+    container.style.display = 'none';
+    btn.textContent = 'View all quotes';
+    return;
+  }
+  btn.textContent = 'Loading...';
+  var res = await sbFetch('quotes?query_id=eq.' + queryId + '&order=created_at.asc');
+  if (!res.ok || !res.data || !res.data.length) {
+    container.innerHTML = '<div style="font-size:12px;color:var(--text-tertiary);padding:4px 0;">No quotes yet.</div>';
+  } else {
+    container.innerHTML = res.data.map(function(q) {
+      var price = q.price ? 'Rs.' + Number(q.price).toLocaleString('en-IN') : '-';
+      var aircraft = q.aircraft_type || 'Unknown aircraft';
+      var isOwn = q.submitted_by === currentUser.id;
+      return '<div style="display:flex;align-items:center;justify-content:space-between;padding:5px 8px;border-radius:6px;margin-bottom:4px;background:var(--surface-secondary);font-size:12px;">'
+        + '<span style="font-weight:500;color:var(--text-primary);">' + price + ' - ' + aircraft + '</span>'
+        + (isOwn ? '<span style="color:var(--gold);font-size:11px;">(yours)</span>' : '')
+        + '</div>';
+    }).join('');
+  }
+  container.style.display = 'block';
+  btn.textContent = 'Hide quotes';
+}
+
+var _editingQuoteId = null;
+var _editingQueryId = null;
+
+async function editQuote(quoteId, queryId) {
+  _editingQuoteId = quoteId;
+  _editingQueryId = queryId;
+  var res = await sbFetch('quotes?id=eq.' + quoteId);
+  if (!res.ok || !res.data || !res.data.length) { alert('Could not load quote.'); return; }
+  var q = res.data[0];
+  var queryRes = await sbFetch('queries?id=eq.' + queryId);
+  if (!queryRes.ok || !queryRes.data || !queryRes.data.length) { alert('Could not load query.'); return; }
+  currentQuery = queryRes.data[0];
+  showQuoteForm(currentQuery);
+  setTimeout(function() {
+    if (document.getElementById('quote-aircraft')) document.getElementById('quote-aircraft').value = q.aircraft_id || '';
+    if (document.getElementById('quote-price')) document.getElementById('quote-price').value = q.price || '';
+    if (document.getElementById('quote-notes')) document.getElementById('quote-notes').value = q.notes || '';
+    var btn = document.getElementById('quote-submit-btn');
+    if (btn) { btn.textContent = 'Update quote'; btn.setAttribute('onclick', 'submitEditedQuote()'); }
+  }, 200);
+}
+
+async function submitEditedQuote() {
+  var aircraftEl = document.getElementById('quote-aircraft');
+  var priceEl    = document.getElementById('quote-price');
+  var notesEl    = document.getElementById('quote-notes');
+  var aircraftId = aircraftEl ? aircraftEl.value : '';
+  var price      = priceEl ? priceEl.value : '';
+  var notes      = notesEl ? notesEl.value : '';
+  if (!price) { alert('Please enter a price.'); return; }
+  var aircraft = {};
+  if (aircraftId) {
+    var ar = await sbFetch('aircraft?id=eq.' + aircraftId);
+    if (ar.ok && ar.data && ar.data[0]) aircraft = ar.data[0];
+  }
+  var patchRes = await sbFetch('quotes?id=eq.' + _editingQuoteId, {
+    method: 'PATCH',
+    body: {
+      price: parseFloat(price),
+      notes: notes,
+      aircraft_id: aircraftId || null,
+      aircraft_type: aircraft.aircraft_type || '',
+      aircraft_registration: aircraft.registration || '',
+      edited: true
+    }
+  });
+  if (!patchRes.ok) { alert('Failed to update quote. Please try again.'); return; }
+  _editingQuoteId = null;
+  _editingQueryId = null;
+  closeModal();
+  loadDashboard();
+}
+
+
 function doLogout() {
   currentUser = null;
   currentOperator = null;
@@ -875,6 +956,8 @@ function renderQuotedQueries(quotes) {
       + '<div class="query-details">'
       + '<div class="query-detail"><span>Your quote</span>' + fmtPrice(q.price) + '</div>'
       + '<div class="query-detail"><span>Pax</span>' + (query.passengers || ' | ') + '</div>'
+      + (q.submitted_by === currentUser.id && !q.edited ? '<div style="margin-top:10px;"><button class="btn-secondary" style="font-size:12px;padding:6px 14px;" onclick="editQuote(\'' + q.id + '\',\'' + q.query_id + '\')">Edit quote</button></div>' : '')
+      + (currentUser && currentUser.role === 'owner' ? '<div style="margin-top:10px;"><button class="btn-link" style="font-size:12px;color:var(--text-tertiary);background:none;border:none;cursor:pointer;padding:0;" onclick="toggleAllQuotes(\'' + q.query_id + '\',this)">View all quotes</button><div id="allquotes-' + q.query_id + '" style="display:none;margin-top:8px;"></div></div>' : '')
       + '</div></div>';
   }).join('');
 }
