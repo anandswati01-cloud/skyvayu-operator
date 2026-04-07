@@ -927,7 +927,7 @@ function showTab(tab) {
   if (tab === 'employees') loadEmployees();
   if (tab === 'revenue') loadRevenue();
   if (tab === 'shared') renderSharedQueries();
-  if (tab === 'confirmed') loadRoster();
+  if (tab === 'confirmed') loadConfirmedTab();
 }
 
 async function loadDashboard() {
@@ -1003,7 +1003,7 @@ function renderActiveQueries(queries){
 }
 
 function renderQuotedQueries(quotes) {
-  var el = document.getElementById('pending-queries-list');
+  var el = document.getElementById('quoted-queries-list');
   if (!el) return;
   if (currentUser && currentUser.role !== 'owner') {
     el.innerHTML = quotes.length ? '<div class="empty-state"><p>Your quote has been submitted and is pending review.</p></div>' : '<div class="empty-state"><p>No pending quotes.</p></div>';
@@ -1324,6 +1324,27 @@ document.addEventListener('click', async function(e) {
   if (toggleBtn) { toggleAllQuotes(toggleBtn.getAttribute('data-toggle-quotes'), toggleBtn); return; }
 });
 
+
+
+async function loadConfirmedTab() {
+  var el = document.getElementById('confirmed-roster-list');
+  if (!el) return;
+  el.innerHTML = '<div class="loading">Loading...</div>';
+  var res = await sbFetch('quotes?operator_id=eq.' + currentOperator.id + '&select=*,queries(*)&order=created_at.desc');
+  var all = res.ok ? res.data : [];
+  var confirmed = all.filter(function(q) {
+    return q.status === 'accepted' || q.status === 'confirmed' || q.status === 'booked';
+  });
+  if (!confirmed.length) {
+    el.innerHTML = '<div class="empty-state"><div class="empty-title">No confirmed bookings yet</div><div class="empty-sub">Confirmed bookings will appear here</div></div>';
+    return;
+  }
+  el.innerHTML = confirmed.map(function(q) {
+    var qr = q.queries || {};
+    var route = qr.trip_type === 'multi' ? 'Multiple sectors' : (qr.departure || '-') + ' -> ' + (qr.destination || '-');
+    return '<div class="query-card"><div class="query-top"><div><div class="query-route">' + route + '</div><div class="query-meta">' + fmtDate(qr.flight_date) + (qr.flight_time ? ' at ' + qr.flight_time : '') + ' | ' + (q.aircraft_type || '-') + '</div></div><span class="badge badge-accepted">Confirmed</span></div><div class="query-details"><div class="query-detail"><span>Pax</span>' + (qr.passengers || '-') + '</div><div class="query-detail"><span>Quote</span>' + fmtPrice(q.price) + '</div></div></div>';
+  }).join('');
+}
 
 function applyRoleRestrictions() {
   var isEmp = currentUser && currentUser.role === 'employee';
