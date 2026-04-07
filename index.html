@@ -614,47 +614,31 @@ async function doLogin() {
   var password = document.getElementById('login-password').value;
   var errEl = document.getElementById('login-error');
   errEl.classList.remove('show');
-
-  if (!username || !password) {
-    errEl.textContent = 'Please enter username and password';
-    errEl.classList.add('show');
-    return;
-  }
-
+  if (!username || !password) { errEl.textContent = 'Please enter username and password'; errEl.classList.add('show'); return; }
   var btn = document.getElementById('login-btn');
-  btn.disabled = true;
-  btn.textContent = 'Checking...';
-
+  btn.disabled = true; btn.textContent = 'Signing in...';
   try {
     var userRes = await sbFetch('operator_users?username=eq.' + encodeURIComponent(username));
-    if (!userRes.ok || !userRes.data || userRes.data.length === 0) throw new Error('bad creds');
+    if (!userRes.ok || !userRes.data || !userRes.data.length) throw new Error('bad');
     var user = userRes.data[0];
     if (!user.is_active) throw new Error('inactive');
-    if ((user.password_hash||'').trim().replace(/^"|"$/g,'') !== (password||'').trim()) throw new Error('bad creds');
-
+    if ((user.password_hash||'').trim().replace(/^"|"$/g,'') !== (password||'').trim()) throw new Error('bad');
     var opRes = await sbFetch('operators?id=eq.' + user.operator_id);
-    if (!opRes.ok || !opRes.data || opRes.data.length === 0) throw new Error('no operator');
-
-    _otpUser     = user;
-    _otpOperator = opRes.data[0];
-    _otpCode     = String(Math.floor(100000 + Math.random() * 900000));
-
-    await sendOtpSms(user, _otpCode);
-
-    btn.style.display = 'none';
-    document.getElementById('otp-section').style.display = 'block';
-    var phone   = user.phone || '';
-    var masked  = phone ? phone.replace(/^(\+?\d{2})(\d+)(\d{2})$/, '$1****$3') : 'your registered number';
-    document.getElementById('otp-hint').textContent = 'Code sent to ' + masked + '. Valid for 10 min.';
-    document.getElementById('otp-input').focus();
-
+    if (!opRes.ok || !opRes.data || !opRes.data.length) throw new Error('no op');
+    currentUser = user;
+    currentOperator = opRes.data[0];
+    sbFetch('operator_users?id=eq.' + currentUser.id, { method:'PATCH', body:{ last_login: new Date().toISOString() } });
+    document.getElementById('page-login').style.display = 'none';
+    document.getElementById('page-dashboard').classList.add('active');
+    document.getElementById('sidebar-name').textContent = currentUser.full_name || currentUser.username;
+    document.getElementById('sidebar-role').textContent = currentOperator.company_name + (currentUser.role==='owner' ? ' | Owner' : ' | Sales');
+    applyRoleRestrictions();
+    loadDashboard();
   } catch(e) {
     errEl.textContent = 'Invalid username or password';
     errEl.classList.add('show');
   }
-
-  btn.disabled = false;
-  btn.textContent = 'Sign in';
+  btn.disabled = false; btn.textContent = 'Sign in';
 }
 
 async function sendOtpSms(user, code) {
