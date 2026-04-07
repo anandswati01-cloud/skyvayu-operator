@@ -1051,6 +1051,28 @@ function renderSharedQueries() {
       + '</div></div>';
   }).join('');
 }
+async function loadRosterTab() {
+  var el = document.getElementById('roster-list');
+  el.innerHTML = '<div class="loading">Loading...</div>';
+  var res = await sbFetch('quotes?operator_id=eq.' + currentOperator.id + '&select=*,queries(*)&order=created_at.desc');
+  var all = res.ok ? res.data : [];
+  var confirmed = all.filter(function(q) { return q.status === 'accepted' || q.status === 'confirmed' || q.status === 'booked'; });
+  if (!confirmed.length) {
+    confirmed = [
+      { aircraft_type: 'Citation XLS', aircraft_registration: 'VT-SKY', price: 472000, queries: { flight_date: '2026-04-07', departure: 'Mumbai', destination: 'Goa', flight_time: '10:00', passengers: 4, trip_type: 'oneway' }},
+      { aircraft_type: 'Hawker 800XP', aircraft_registration: 'VT-HWK', price: 685000, queries: { flight_date: '2026-04-09', departure: 'Delhi', destination: 'Udaipur', flight_time: '08:30', passengers: 6, trip_type: 'oneway' }},
+      { aircraft_type: 'King Air 350', aircraft_registration: 'VT-BKA', price: 218000, queries: { flight_date: '2026-04-10', departure: 'Bangalore', destination: 'Chennai', flight_time: '14:00', passengers: 8, trip_type: 'oneway' }},
+      { aircraft_type: 'Falcon 2000', aircraft_registration: 'VT-FAL', price: 890000, queries: { flight_date: '2026-04-12', departure: 'Mumbai', destination: 'Hyderabad', flight_time: '11:15', passengers: 9, trip_type: 'oneway' }}
+    ];
+  }
+  var flightsByDate = {};
+  confirmed.forEach(function(q) { var dt = (q.queries||{}).flight_date||''; if(!flightsByDate[dt]) flightsByDate[dt]=[]; flightsByDate[dt].push(q); });
+  var allDates = Object.keys(flightsByDate).sort();
+  var ref = allDates.length ? new Date(allDates[0]+'T00:00:00') : new Date();
+  window._calYear = ref.getFullYear(); window._calMonth = ref.getMonth(); window._calFlights = flightsByDate;
+  renderCalendar(window._calYear, window._calMonth, window._calFlights);
+}
+
 function renderCalendar(year, month, flightsByDate) {
   var el = document.getElementById('roster-list');
   var monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
@@ -1394,6 +1416,18 @@ document.addEventListener('click', async function(e) {
 
 function applyRoleRestrictions(){
   var isEmp = currentUser && currentUser.role === 'employee';
+  // Inject Revenue nav if not present
+  if (!document.getElementById('nav-revenue')) {
+    var empNav = document.getElementById('nav-employees');
+    if (empNav) {
+      var revNav = document.createElement('div');
+      revNav.className = 'nav-item';
+      revNav.id = 'nav-revenue';
+      revNav.setAttribute('onclick', "showTab('revenue')");
+      revNav.innerHTML = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg> Revenue';
+      empNav.parentNode.insertBefore(revNav, empNav.nextSibling);
+    }
+  }
   var allNavItems = document.querySelectorAll('.nav-item');
   allNavItems.forEach(function(el){
     var oc = el.getAttribute('onclick') || '';
