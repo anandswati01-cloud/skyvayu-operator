@@ -869,153 +869,54 @@ function renderActiveQueries(queries){
 }
 
 function renderQuotedQueries(quotes) {
-  var el = document.getElementById('quoted-queries-list');
-  if (!quotes.length) {
-    el.innerHTML = '<div class="empty-state"><div class="empty-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#85B7EB" stroke-width="1.5" stroke-linecap="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div><div class="empty-title">No pending quotes</div><div class="empty-sub">Quotes awaiting client response will appear here</div></div>';
+  var el = document.getElementById('pending-queries-list');
+  if (!el) return;
+  if (currentUser && currentUser.role !== 'owner') {
+    el.innerHTML = quotes.length ? '<div class="empty-state"><p>Your quote has been submitted and is pending review.</p></div>' : '<div class="empty-state"><p>No pending quotes.</p></div>';
     return;
   }
-    if (currentUser && currentUser.role !== 'owner') { el.innerHTML = '<div class="empty-state"><p>No quotes to display.</p></div>'; } else { el.innerHTML = quotes.map(function(q) {
+  if (!quotes.length) {
+    el.innerHTML = '<div class="empty-state"><div class="empty-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 12h6m-3-3v6m-7 3h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v13a2 2 0 002 2z"/></svg></div><div class="empty-title">No pending quotes</div></div>';
+    return;
+  }
+  el.innerHTML = quotes.map(function(q) {
     var query = q.queries || {};
-    var route = query.trip_type === 'multi' ? 'Multiple sectors' : (query.departure || ' | ') + ' -> ' + (query.destination || ' | ');
+    var route = query.trip_type === 'multi' ? 'Multiple sectors' : (query.departure || '-') + ' -> ' + (query.destination || '-');
     return '<div class="query-card">'
       + '<div class="query-top">'
       + '<div><div class="query-route">' + route + '</div>'
-      + '<div class="query-meta">' + fmtDate(query.flight_date) + '  | ' + (q.aircraft_type || ' | ') + '</div></div>'
+      + '<div class="query-meta">' + fmtDate(query.flight_date) + '  |  ' + (q.aircraft_type || '') + '</div></div>'
       + '<span class="badge badge-quoted">Quoted</span>'
       + '</div>'
       + '<div class="query-details">'
-      + '<div class="query-detail"><span>Your quote</span>' + fmtPrice(q.price) + '</div>'
-      + '<div class="query-detail"><span>Pax</span>' + (query.passengers || ' | ') + '</div>'
-      + (currentUser && currentUser.role === 'owner' && !q.edited ? '<div style="margin-top:10px;"><button class="btn-secondary" style="font-size:12px;padding:6px 14px;" data-edit-quote="' + q.id + '" data-edit-query="' + q.query_id + '">Edit quote</button></div>' : '')
-      + (currentUser && currentUser.role === 'owner' ? '<div style="margin-top:10px;"><button class="btn-link" style="font-size:12px;color:var(--text-tertiary);background:none;border:none;cursor:pointer;padding:0;" data-toggle-quotes="' + q.query_id + '">View all quotes</button><div id="allquotes-' + q.query_id + '" style="display:none;margin-top:8px;"></div></div>' : '')
+      + '<div class="query-detail"><span>Quote</span>' + fmtPrice(q.price) + '</div>'
+      + '<div class="query-detail"><span>Pax</span>' + (query.passengers || '-') + '</div>'
+      + (currentUser.role === 'owner' && !q.edited ? '<div style="margin-top:10px;"><button class="btn-secondary" style="font-size:12px;padding:6px 14px;" data-edit-quote="' + q.id + '" data-edit-query="' + q.query_id + '">Edit quote</button></div>' : '')
+      + (currentUser.role === 'owner' ? '<div style="margin-top:10px;"><button class="btn-link" style="font-size:12px;color:var(--text-tertiary);background:none;border:none;cursor:pointer;padding:0;" data-toggle-quotes="' + q.query_id + '">View all quotes</button><div id="allquotes-' + q.query_id + '" style="display:none;margin-top:8px;"></div></div>' : '')
       + '</div></div>';
   }).join('');
 }
-
 function renderSharedQueries() {
-  var shared = allMyQuotes.filter(function(q){ return q.status === 'shared'; }); }
+  var shared = allMyQuotes.filter(function(q){ return q.status === 'shared'; });
   var el = document.getElementById('shared-queries-list');
-  if (!shared.length) {
-    el.innerHTML = '<div class="empty-state"><div class="empty-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg></div><div class="empty-title">No quotes shared yet</div><div class="empty-sub">Quotes viewed by clients will appear here</div></div>';
+  if (!el) return;
+  if (currentUser && currentUser.role !== 'owner') {
+    el.innerHTML = shared.length ? '<div class="empty-state"><p>Your quote has been shared with the client.</p></div>' : '<div class="empty-state"><p>No shared quotes.</p></div>';
     return;
   }
-    if (currentUser && currentUser.role !== 'owner') { el.innerHTML = '<div class="empty-state"><p>No quotes to display.</p></div>'; } else { el.innerHTML = shared.map(function(q) { }
-  var el = document.getElementById('shared-queries-list');
   if (!shared.length) {
-    el.innerHTML = '<div class="empty-state"><div class="empty-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg></div><div class="empty-title">No quotes shared yet</div><div class="empty-sub">Quotes viewed by clients will appear here</div></div>';
-    return;
-  }
-  el.innerHTML = shared.map(function(q) { } }
-  var el = document.getElementById('shared-queries-list');
-  if (!shared.length) {
-    el.innerHTML = '<div class="empty-state"><div class="empty-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg></div><div class="empty-title">No quotes shared yet</div><div class="empty-sub">Quotes viewed by clients will appear here</div></div>';
+    el.innerHTML = '<div class="empty-state"><div class="empty-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 12h6m-3-3v6m-7 3h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v13a2 2 0 002 2z"/></svg></div><div class="empty-title">No shared quotes</div></div>';
     return;
   }
   el.innerHTML = shared.map(function(q) {
     var query = q.queries || {};
-    var route = query.trip_type === 'multi' ? 'Multiple sectors' : (query.departure || ' | ') + ' -> ' + (query.destination || ' | ');
-    return '<div class="query-card"><div class="query-top"><div><div class="query-route">' + route + '</div><div class="query-meta">' + fmtDate(query.flight_date) + '  | ' + (q.aircraft_type || ' | ') + '</div></div><span class="badge badge-quoted">Shared</span></div><div class="query-details"><div class="query-detail"><span>Your quote</span>' + fmtPrice(q.price) + '</div><div class="query-detail"><span>Pax</span>' + (query.passengers || ' | ') + '</div></div></div>';
+    var route = query.trip_type === 'multi' ? 'Multiple sectors' : (query.departure || '-') + ' -> ' + (query.destination || '-');
+    return '<div class="query-card"><div class="query-top"><div><div class="query-route">' + route + '</div><div class="query-meta">' + fmtDate(query.flight_date) + '  |  ' + (q.aircraft_type || '') + '</div></div><span class="badge badge-shared">Shared</span></div><div class="query-details"><div class="query-detail"><span>Quote</span>' + fmtPrice(q.price) + '</div><div class="query-detail"><span>Pax</span>' + (query.passengers || '-') + '</div>'
+      + (currentUser.role === 'owner' && !q.edited ? '<div style="margin-top:10px;"><button class="btn-secondary" style="font-size:12px;padding:6px 14px;" data-edit-quote="' + q.id + '" data-edit-query="' + q.query_id + '">Edit quote</button></div>' : '')
+      + (currentUser.role === 'owner' ? '<div style="margin-top:10px;"><button class="btn-link" style="font-size:12px;color:var(--text-tertiary);background:none;border:none;cursor:pointer;padding:0;" data-toggle-quotes="' + q.query_id + '">View all quotes</button><div id="allquotes-' + q.query_id + '" style="display:none;margin-top:8px;"></div></div>' : '')
+      + '</div></div>';
   }).join('');
 }
-
-async function loadRoster() {
-  var confirmed = allMyQuotes.filter(function(q){ return q.status === 'accepted' || q.status === 'confirmed' || q.status === 'booked'; });
-  var el = document.getElementById('confirmed-roster-list');
-
-  if (!confirmed.length) {
-    el.innerHTML = '<div class="empty-state"><div class="empty-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg></div><div class="empty-title">No confirmed bookings yet</div><div class="empty-sub">Timetable will update automatically when clients confirm</div></div>';
-    return;
-  }
-
-  confirmed.sort(function(a, b) {
-    var da = (a.queries || {}).flight_date || '';
-    var db = (b.queries || {}).flight_date || '';
-    return da.localeCompare(db);
-  });
-
-  var html = '<div style="background:var(--bg-card);border:0.5px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;">'
-    + '<div style="padding:16px 20px;border-bottom:0.5px solid var(--border);display:flex;align-items:center;justify-content:space-between;">'
-    + '<div style="font-size:13px;font-weight:500;color:var(--text);">Flight timetable</div>'
-    + '<div style="font-size:12px;color:var(--text-tertiary);">' + confirmed.length + ' flight' + (confirmed.length !== 1 ? 's' : '') + ' confirmed</div>'
-    + '</div>'
-    + '<table style="width:100%;border-collapse:collapse;font-size:13px;">'
-    + '<thead><tr style="border-bottom:0.5px solid var(--border);">'
-    + '<th style="padding:10px 20px;text-align:left;font-size:11px;font-weight:500;color:var(--text-tertiary);letter-spacing:.06em;text-transform:uppercase;">Date</th>'
-    + '<th style="padding:10px 12px;text-align:left;font-size:11px;font-weight:500;color:var(--text-tertiary);letter-spacing:.06em;text-transform:uppercase;">Time</th>'
-    + '<th style="padding:10px 12px;text-align:left;font-size:11px;font-weight:500;color:var(--text-tertiary);letter-spacing:.06em;text-transform:uppercase;">Route</th>'
-    + '<th style="padding:10px 12px;text-align:left;font-size:11px;font-weight:500;color:var(--text-tertiary);letter-spacing:.06em;text-transform:uppercase;">Aircraft</th>'
-    + '<th style="padding:10px 12px;text-align:left;font-size:11px;font-weight:500;color:var(--text-tertiary);letter-spacing:.06em;text-transform:uppercase;">Reg</th>'
-    + '<th style="padding:10px 12px;text-align:left;font-size:11px;font-weight:500;color:var(--text-tertiary);letter-spacing:.06em;text-transform:uppercase;">Pax</th>'
-    + '<th style="padding:10px 12px;text-align:left;font-size:11px;font-weight:500;color:var(--text-tertiary);letter-spacing:.06em;text-transform:uppercase;">Value</th>'
-    + '<th style="padding:10px 20px;text-align:left;font-size:11px;font-weight:500;color:var(--text-tertiary);letter-spacing:.06em;text-transform:uppercase;">Status</th>'
-    + '</tr></thead><tbody>';
-
-  confirmed.forEach(function(q, i) {
-    var query = q.queries || {};
-    var route = query.trip_type === 'multi' ? 'Multiple sectors' : (query.departure || ' | ') + ' -> ' + (query.destination || ' | ');
-    var bg = i % 2 === 0 ? '' : 'background:rgba(0,0,0,0.02);';
-    html += '<tr style="border-bottom:0.5px solid var(--border);' + bg + '">'
-      + '<td style="padding:13px 20px;color:var(--text);font-weight:500;">' + fmtDate(query.flight_date) + '</td>'
-      + '<td style="padding:13px 12px;color:var(--text-secondary);">' + (query.flight_time || ' | ') + '</td>'
-      + '<td style="padding:13px 12px;color:var(--text);">' + route + '</td>'
-      + '<td style="padding:13px 12px;color:var(--text-secondary);">' + (q.aircraft_type || ' | ') + '</td>'
-      + '<td style="padding:13px 12px;color:var(--text-tertiary);font-family:monospace;font-size:12px;">' + (q.aircraft_registration || ' | ') + '</td>'
-      + '<td style="padding:13px 12px;color:var(--text-secondary);">' + (query.passengers || ' | ') + '</td>'
-      + '<td style="padding:13px 12px;color:var(--gold);font-weight:500;">' + fmtPrice(q.price) + '</td>'
-      + '<td style="padding:13px 20px;"><span style="background:var(--green-faint);color:var(--green-light);border:0.5px solid rgba(59,109,17,0.3);font-size:10px;font-weight:500;padding:3px 10px;border-radius:20px;text-transform:uppercase;letter-spacing:.05em;">Confirmed</span></td>'
-      + '</tr>';
-  });
-
-  html += '</tbody></table></div>';
-  el.innerHTML = html;
-}
-
-async function loadRosterTab() {
-  var el = document.getElementById('roster-list');
-  el.innerHTML = '<div class="loading">Loading...</div>';
-
-  var res = await sbFetch('quotes?operator_id=eq.' + currentOperator.id + '&select=*,queries(*)&order=created_at.desc');
-  var all = res.ok ? res.data : [];
-  var confirmed = all.filter(function(q) {
-    return q.status === 'accepted' || q.status === 'confirmed' || q.status === 'booked';
-  });
-
-  // Use demo flights if no real ones
-  if (!confirmed.length) {
-    confirmed = [
-      { aircraft_type: 'Citation XLS', aircraft_registration: 'VT-SKY', price: 472000,
-        queries: { flight_date: '2026-04-07', departure: 'Mumbai', destination: 'Goa', flight_time: '10:00', passengers: 4, trip_type: 'oneway' }},
-      { aircraft_type: 'Hawker 800XP', aircraft_registration: 'VT-HWK', price: 685000,
-        queries: { flight_date: '2026-04-09', departure: 'Delhi', destination: 'Udaipur', flight_time: '08:30', passengers: 6, trip_type: 'oneway' }},
-      { aircraft_type: 'Beechcraft King Air', aircraft_registration: 'VT-BKA', price: 218000,
-        queries: { flight_date: '2026-04-10', departure: 'Bangalore', destination: 'Chennai', flight_time: '14:00', passengers: 8, trip_type: 'oneway' }},
-      { aircraft_type: 'Falcon 2000', aircraft_registration: 'VT-FAL', price: 890000,
-        queries: { flight_date: '2026-04-12', departure: 'Mumbai', destination: 'Hyderabad', flight_time: '11:15', passengers: 9, trip_type: 'oneway' }},
-      { aircraft_type: 'Citation XLS', aircraft_registration: 'VT-SKY', price: 944000,
-        queries: { flight_date: '2026-04-14', departure: 'Delhi', destination: 'Mumbai', flight_time: '16:45', passengers: 4, trip_type: 'return' }},
-      { aircraft_type: 'Hawker 800XP', aircraft_registration: 'VT-HWK', price: 560000,
-        queries: { flight_date: '2026-04-15', departure: 'Goa', destination: 'Bangalore', flight_time: '09:00', passengers: 5, trip_type: 'oneway' }},
-    ];
-  }
-
-  // Build a map of date -> flights
-  var flightsByDate = {};
-  confirmed.forEach(function(q) {
-    var d = (q.queries || {}).flight_date || '';
-    if (!flightsByDate[d]) flightsByDate[d] = [];
-    flightsByDate[d].push(q);
-  });
-
-  // Determine month to display (from first flight)
-  var allDates = Object.keys(flightsByDate).sort();
-  var refDate = allDates.length ? new Date(allDates[0] + 'T00:00:00') : new Date();
-  window._calYear = refDate.getFullYear();
-  window._calMonth = refDate.getMonth();
-  window._calFlights = flightsByDate;
-
-  renderCalendar(window._calYear, window._calMonth, window._calFlights);
-}
-
 function renderCalendar(year, month, flightsByDate) {
   var el = document.getElementById('roster-list');
   var monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
