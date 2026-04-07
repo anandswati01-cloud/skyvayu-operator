@@ -1353,9 +1353,8 @@ function renderCalendar(year, month, flightsByDate) {
   window._calYear = year; window._calMonth = month; window._calFlights = flightsByDate;
   var monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
   var acColors = {}; var colorIdx = 0;
-  var colorList = ['#C4860A','#3B6D11','#185FA5','#8B2FC9','#C0392B','#1A7A8A'];
-  function getColor(reg) { if (!acColors[reg]) { acColors[reg] = colorList[colorIdx % colorList.length]; colorIdx++; } return acColors[reg]; }
-  // Build prev/next buttons
+  var colorPalette = ['#C4860A','#3B6D11','#185FA5','#8B2FC9','#C0392B','#1A7A8A'];
+  function getColor(reg) { if (!acColors[reg]) { acColors[reg] = colorPalette[colorIdx % colorPalette.length]; colorIdx++; } return acColors[reg]; }
   var html = '<div class="calendar-header">';
   html += '<div class="cal-nav"><button class="cal-nav-btn" onclick="calPrev()">';
   html += '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg></button></div>';
@@ -1363,64 +1362,52 @@ function renderCalendar(year, month, flightsByDate) {
   html += '<div class="cal-nav"><button class="cal-nav-btn" onclick="calNext()">';
   html += '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg></button></div>';
   html += '</div>';
-  // Day-of-week headers
   var dowNames = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
   html += '<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:1px;margin-bottom:2px;">';
   dowNames.forEach(function(d) {
     html += '<div style="text-align:center;font-size:10px;font-weight:500;color:var(--text-tertiary);letter-spacing:.07em;text-transform:uppercase;padding:6px 0;">' + d + '</div>';
   });
   html += '</div>';
-  // Grid cells
   var firstDay = new Date(year, month, 1).getDay();
   var daysInMonth = new Date(year, month + 1, 0).getDate();
-  var today = new Date(); var todayStr = today.toISOString().substring(0,10);
+  var todayStr = new Date().toISOString().substring(0,10);
   html += '<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;">';
-  // Empty cells before first day
-  for (var i = 0; i < firstDay; i++) {
-    html += '<div style="min-height:80px;"></div>';
-  }
+  for (var i = 0; i < firstDay; i++) { html += '<div style="min-height:80px;"></div>'; }
   for (var day = 1; day <= daysInMonth; day++) {
     var mm = String(month + 1).padStart(2,'0');
-    var dd = String(day).padStart(2,'0');
-    var dateStr = year + '-' + mm + '-' + dd;
+    var dd2 = String(day).padStart(2,'0');
+    var dateStr = year + '-' + mm + '-' + dd2;
     var flights = flightsByDate[dateStr] || [];
     var isToday = dateStr === todayStr;
     var hasFlight = flights.length > 0;
     var cellBg = hasFlight ? 'var(--bg-card)' : 'transparent';
     var cellBorder = isToday ? '0.5px solid var(--gold)' : hasFlight ? '0.5px solid var(--border)' : '0.5px solid transparent';
-    html += '<div style="min-height:80px;border-radius:var(--radius);border:' + cellBorder + ';background:' + cellBg + ';padding:6px;cursor:' + (hasFlight ? 'pointer' : 'default') + ';transition:border-color .15s;" onclick="calDayClick(''+dateStr+'',' + JSON.stringify(flights).replace(/"/g,"'") + ')">';
+    html += '<div style="min-height:80px;border-radius:var(--radius);border:' + cellBorder + ';background:' + cellBg + ';padding:6px;cursor:' + (hasFlight ? 'pointer' : 'default') + ';" onclick="calDayClick(' + JSON.stringify(dateStr) + ')">';
     html += '<div style="font-size:12px;font-weight:' + (isToday ? '600' : '400') + ';color:' + (isToday ? 'var(--gold)' : 'var(--text-secondary)') + ';margin-bottom:4px;">' + day + '</div>';
     flights.forEach(function(q) {
       var qr = q.queries || {};
       var reg = q.aircraft_registration || q.aircraft_type || '?';
       var color = getColor(reg);
       var dep = qr.departure || '-'; var dest = qr.destination || '-';
-      html += '<div style="background:' + color + '22;border-left:2px solid ' + color + ';border-radius:3px;padding:2px 5px;margin-bottom:3px;font-size:10px;color:' + color + ';font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">';
-      html += dep + ' - ' + dest;
-      html += '</div>';
+      html += '<div style="background:' + color + '22;border-left:2px solid ' + color + ';border-radius:3px;padding:2px 5px;margin-bottom:3px;font-size:10px;color:' + color + ';font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + dep + '-' + dest + '</div>';
     });
     html += '</div>';
   }
-  // Fill remaining cells
   var totalCells = firstDay + daysInMonth;
-  var remainder = totalCells % 7;
-  if (remainder > 0) { for (var j = remainder; j < 7; j++) { html += '<div style="min-height:80px;"></div>'; } }
+  var rem = totalCells % 7;
+  if (rem > 0) { for (var j = rem; j < 7; j++) { html += '<div style="min-height:80px;"></div>'; } }
   html += '</div>';
-  // Legend
   var regs = Object.keys(acColors);
   if (regs.length) {
     html += '<div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:16px;padding-top:12px;border-top:0.5px solid var(--border);">';
     regs.forEach(function(reg) {
-      html += '<div style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text-secondary);">';
-      html += '<div style="width:10px;height:10px;border-radius:2px;background:' + acColors[reg] + ';"></div>' + reg + '</div>';
+      html += '<div style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text-secondary);"><div style="width:10px;height:10px;border-radius:2px;background:' + acColors[reg] + ';"></div>' + reg + '</div>';
     });
     html += '</div>';
   }
-  // Detail panel placeholder
   html += '<div id="cal-detail" style="margin-top:20px;"></div>';
   el.innerHTML = html;
 }
-
 function calPrev() {
   var m = window._calMonth - 1; var y = window._calYear;
   if (m < 0) { m = 11; y--; }
@@ -1431,19 +1418,21 @@ function calNext() {
   if (m > 11) { m = 0; y++; }
   renderCalendar(y, m, window._calFlights);
 }
-function calDayClick(dateStr, flights) {
+function calDayClick(dateStr) {
   var det = document.getElementById('cal-detail');
   if (!det) return;
-  if (!flights || !flights.length) { det.innerHTML = ''; return; }
-  var acColors = {}; var colorIdx = 0;
-  var colorList = ['#C4860A','#3B6D11','#185FA5','#8B2FC9','#C0392B','#1A7A8A'];
-  function getColor(reg) { if (!acColors[reg]) { acColors[reg] = colorList[colorIdx % colorList.length]; colorIdx++; } return acColors[reg]; }
-  var html = '<div style="font-size:11px;font-weight:500;color:var(--text-tertiary);letter-spacing:.07em;text-transform:uppercase;margin-bottom:12px;">' + dateStr + '</div>';
+  var flights = (window._calFlights || {})[dateStr] || [];
+  if (!flights.length) { det.innerHTML = ''; return; }
+  var colorPalette2 = ['#C4860A','#3B6D11','#185FA5','#8B2FC9','#C0392B','#1A7A8A'];
+  var acColors2 = {}; var ci2 = 0;
+  function gc2(reg) { if (!acColors2[reg]) { acColors2[reg] = colorPalette2[ci2 % colorPalette2.length]; ci2++; } return acColors2[reg]; }
+  var dp = dateStr.split('-'); var dLabel = dp[2] + '-' + dp[1] + '-' + dp[0];
+  var html = '<div style="font-size:11px;font-weight:500;color:var(--text-tertiary);letter-spacing:.07em;text-transform:uppercase;margin-bottom:12px;">' + dLabel + '</div>';
   flights.forEach(function(q) {
     var qr = q.queries || {};
     var route = qr.trip_type === 'multi' ? 'Multiple sectors' : (qr.departure || '-') + ' to ' + (qr.destination || '-');
     var reg = q.aircraft_registration || q.aircraft_type || 'Unknown';
-    var color = getColor(reg);
+    var color = gc2(reg);
     html += '<div class="roster-card" style="border-left:3px solid ' + color + ';margin-bottom:12px;">';
     html += '<div class="roster-flight"><div><div class="roster-route">' + route + '</div>';
     html += '<div class="roster-meta">' + (qr.flight_time ? qr.flight_time + ' &nbsp;|&nbsp; ' : '') + (q.aircraft_type || '') + ' &nbsp; ' + reg + '</div></div>';
