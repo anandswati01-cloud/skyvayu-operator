@@ -874,7 +874,7 @@ function renderQuotedQueries(quotes) {
     el.innerHTML = '<div class="empty-state"><div class="empty-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#85B7EB" stroke-width="1.5" stroke-linecap="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div><div class="empty-title">No pending quotes</div><div class="empty-sub">Quotes awaiting client response will appear here</div></div>';
     return;
   }
-  el.innerHTML = quotes.map(function(q) {
+    if (currentUser && currentUser.role !== 'owner') { el.innerHTML = '<div class="empty-state"><p>No quotes to display.</p></div>'; } else { el.innerHTML = quotes.map(function(q) {
     var query = q.queries || {};
     var route = query.trip_type === 'multi' ? 'Multiple sectors' : (query.departure || ' | ') + ' -> ' + (query.destination || ' | ');
     return '<div class="query-card">'
@@ -893,7 +893,19 @@ function renderQuotedQueries(quotes) {
 }
 
 function renderSharedQueries() {
-  var shared = allMyQuotes.filter(function(q){ return q.status === 'shared'; });
+  var shared = allMyQuotes.filter(function(q){ return q.status === 'shared'; }); }
+  var el = document.getElementById('shared-queries-list');
+  if (!shared.length) {
+    el.innerHTML = '<div class="empty-state"><div class="empty-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg></div><div class="empty-title">No quotes shared yet</div><div class="empty-sub">Quotes viewed by clients will appear here</div></div>';
+    return;
+  }
+    if (currentUser && currentUser.role !== 'owner') { el.innerHTML = '<div class="empty-state"><p>No quotes to display.</p></div>'; } else { el.innerHTML = shared.map(function(q) { }
+  var el = document.getElementById('shared-queries-list');
+  if (!shared.length) {
+    el.innerHTML = '<div class="empty-state"><div class="empty-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg></div><div class="empty-title">No quotes shared yet</div><div class="empty-sub">Quotes viewed by clients will appear here</div></div>';
+    return;
+  }
+  el.innerHTML = shared.map(function(q) { } }
   var el = document.getElementById('shared-queries-list');
   if (!shared.length) {
     el.innerHTML = '<div class="empty-state"><div class="empty-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg></div><div class="empty-title">No quotes shared yet</div><div class="empty-sub">Quotes viewed by clients will appear here</div></div>';
