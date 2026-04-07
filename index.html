@@ -1,5 +1,5 @@
 <!DO
-        <li class="nav-item" id="nav-revenue" onclick="showTab('revenue')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>Revenue</li>CTYPE html>
+        <li class="nav-item" id="nav-revenue" onclick="showTab('revenue')" style="display:none;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>Revenue</li>CTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8"/>
@@ -1394,13 +1394,11 @@ document.addEventListener('click', async function(e) {
 
 function applyRoleRestrictions(){
   var isEmp = currentUser && currentUser.role === 'employee';
-  // Hide/show nav items based on role
   var allNavItems = document.querySelectorAll('.nav-item');
   allNavItems.forEach(function(el){
     var oc = el.getAttribute('onclick') || '';
-    var isRestricted = oc.indexOf('fleet') > -1 || oc.indexOf('employees') > -1 || oc.indexOf('roster') > -1;
     var navId = el.id || '';
-    if(navId === 'nav-employees') isRestricted = true;
+    var isRestricted = oc.indexOf('fleet') > -1 || oc.indexOf('employees') > -1 || oc.indexOf('roster') > -1 || navId === 'nav-employees' || navId === 'nav-revenue';
     if(isRestricted) el.style.display = isEmp ? 'none' : 'flex';
   });
 }
