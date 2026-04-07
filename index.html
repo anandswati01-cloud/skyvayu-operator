@@ -1054,139 +1054,50 @@ function renderSharedQueries() {
 async function loadRosterTab() {
   var el = document.getElementById('roster-list');
   el.innerHTML = '<div class="loading">Loading...</div>';
+
   var res = await sbFetch('quotes?operator_id=eq.' + currentOperator.id + '&select=*,queries(*)&order=created_at.desc');
   var all = res.ok ? res.data : [];
-  var confirmed = all.filter(function(q) { return q.status === 'accepted' || q.status === 'confirmed' || q.status === 'booked'; });
+  var confirmed = all.filter(function(q) {
+    return q.status === 'accepted' || q.status === 'confirmed' || q.status === 'booked';
+  });
+
+  // Fall back to mock flights if no real confirmed ones
   if (!confirmed.length) {
+    var today = new Date();
+    function fdate(offset) {
+      var d = new Date(today); d.setDate(d.getDate() + offset);
+      return d.toISOString().substring(0,10);
+    }
     confirmed = [
-      { aircraft_type: 'Citation XLS', aircraft_registration: 'VT-SKY', price: 472000, queries: { flight_date: '2026-04-07', departure: 'Mumbai', destination: 'Goa', flight_time: '10:00', passengers: 4, trip_type: 'oneway' }},
-      { aircraft_type: 'Hawker 800XP', aircraft_registration: 'VT-HWK', price: 685000, queries: { flight_date: '2026-04-09', departure: 'Delhi', destination: 'Udaipur', flight_time: '08:30', passengers: 6, trip_type: 'oneway' }},
-      { aircraft_type: 'King Air 350', aircraft_registration: 'VT-BKA', price: 218000, queries: { flight_date: '2026-04-10', departure: 'Bangalore', destination: 'Chennai', flight_time: '14:00', passengers: 8, trip_type: 'oneway' }},
-      { aircraft_type: 'Falcon 2000', aircraft_registration: 'VT-FAL', price: 890000, queries: { flight_date: '2026-04-12', departure: 'Mumbai', destination: 'Hyderabad', flight_time: '11:15', passengers: 9, trip_type: 'oneway' }}
+      { aircraft_type:'Citation XLS', aircraft_registration:'VT-SKY', price:472000, status:'confirmed',
+        queries:{ flight_date:fdate(0), departure:'Mumbai', destination:'Goa', flight_time:'10:00', passengers:4, trip_type:'oneway' }},
+      { aircraft_type:'Hawker 800XP', aircraft_registration:'VT-HWK', price:685000, status:'confirmed',
+        queries:{ flight_date:fdate(2), departure:'Delhi', destination:'Udaipur', flight_time:'08:30', passengers:6, trip_type:'oneway' }},
+      { aircraft_type:'King Air 350', aircraft_registration:'VT-BKA', price:218000, status:'confirmed',
+        queries:{ flight_date:fdate(3), departure:'Bangalore', destination:'Chennai', flight_time:'14:00', passengers:8, trip_type:'oneway' }},
+      { aircraft_type:'Falcon 2000', aircraft_registration:'VT-FAL', price:890000, status:'confirmed',
+        queries:{ flight_date:fdate(5), departure:'Mumbai', destination:'Hyderabad', flight_time:'11:15', passengers:9, trip_type:'oneway' }},
+      { aircraft_type:'Citation XLS', aircraft_registration:'VT-SKY', price:944000, status:'confirmed',
+        queries:{ flight_date:fdate(7), departure:'Delhi', destination:'Mumbai', flight_time:'16:45', passengers:4, trip_type:'return' }},
+      { aircraft_type:'Hawker 800XP', aircraft_registration:'VT-HWK', price:560000, status:'confirmed',
+        queries:{ flight_date:fdate(8), departure:'Goa', destination:'Bangalore', flight_time:'09:00', passengers:5, trip_type:'oneway' }},
     ];
   }
+
   var flightsByDate = {};
-  confirmed.forEach(function(q) { var dt = (q.queries||{}).flight_date||''; if(!flightsByDate[dt]) flightsByDate[dt]=[]; flightsByDate[dt].push(q); });
+  confirmed.forEach(function(q) {
+    var dd = (q.queries || {}).flight_date || '';
+    if (!flightsByDate[dd]) flightsByDate[dd] = [];
+    flightsByDate[dd].push(q);
+  });
+
   var allDates = Object.keys(flightsByDate).sort();
-  var ref = allDates.length ? new Date(allDates[0]+'T00:00:00') : new Date();
-  window._calYear = ref.getFullYear(); window._calMonth = ref.getMonth(); window._calFlights = flightsByDate;
+  var refDate = allDates.length ? new Date(allDates[0] + 'T00:00:00') : new Date();
+  window._calYear  = refDate.getFullYear();
+  window._calMonth = refDate.getMonth();
+  window._calFlights = flightsByDate;
   renderCalendar(window._calYear, window._calMonth, window._calFlights);
 }
-
-function renderCalendar(year, month, flightsByDate) {
-  var el = document.getElementById('roster-list');
-  var monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
-  var dayNames = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
-
-  var firstDay = new Date(year, month, 1).getDay();
-  var daysInMonth = new Date(year, month + 1, 0).getDate();
-  var today = new Date();
-
-  // Aircraft colour palette
-  var acColors = {
-    'Citation XLS':      { bg: 'rgba(196,134,10,0.12)',  border: '#C4860A', text: '#7A5200' },
-    'Hawker 800XP':      { bg: 'rgba(59,109,17,0.12)',   border: '#4A8A14', text: '#2A5800' },
-    'Beechcraft King Air': { bg: 'rgba(24,95,165,0.12)', border: '#3B7ACC', text: '#1A4A8A' },
-    'Falcon 2000':       { bg: 'rgba(140,40,140,0.12)',  border: '#9B2D9B', text: '#6B1D6B' },
-  };
-  function getColor(type) {
-    return acColors[type] || { bg: 'rgba(100,100,100,0.1)', border: '#888', text: '#444' };
-  }
-
-  var html = '<div style="background:var(--bg-card);border:0.5px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;">';
-
-  // Calendar header
-  html += '<div style="display:flex;align-items:center;justify-content:space-between;padding:18px 24px;border-bottom:0.5px solid var(--border);">';
-  html += '<div style="font-family:var(--font-display);font-size:20px;font-weight:300;color:var(--gold);">' + monthNames[month] + ' ' + year + '</div>';
-  html += '<div style="display:flex;gap:8px;">';
-  html += '<button onclick="calNav(-1)" style="width:32px;height:32px;border-radius:50%;background:transparent;border:0.5px solid var(--border-hover);cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--text-secondary);font-size:14px;" title="Previous month">&#8249;</button>';
-  html += '<button onclick="calNav(1)"  style="width:32px;height:32px;border-radius:50%;background:transparent;border:0.5px solid var(--border-hover);cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--text-secondary);font-size:14px;" title="Next month">&#8250;</button>';
-  html += '</div></div>';
-
-  // Day-name row
-  html += '<div style="display:grid;grid-template-columns:repeat(7,1fr);border-bottom:0.5px solid var(--border);">';
-  dayNames.forEach(function(d) {
-    html += '<div style="padding:10px 0;text-align:center;font-size:11px;font-weight:500;color:var(--text-tertiary);letter-spacing:.06em;">' + d + '</div>';
-  });
-  html += '</div>';
-
-  // Calendar grid
-  html += '<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:0;">';
-
-  var cell = 0;
-  // Empty cells before first day
-  for (var i = 0; i < firstDay; i++, cell++) {
-    html += '<div style="min-height:90px;padding:8px;border-right:0.5px solid var(--border);border-bottom:0.5px solid var(--border);background:var(--bg-secondary);opacity:0.5;"></div>';
-  }
-
-  for (var day = 1; day <= daysInMonth; day++, cell++) {
-    var mm = String(month + 1).padStart(2, '0');
-    var dd = String(day).padStart(2, '0');
-    var dateKey = year + '-' + mm + '-' + dd;
-    var flights = flightsByDate[dateKey] || [];
-    var isToday = (day === today.getDate() && month === today.getMonth() && year === today.getFullYear());
-    var isWeekend = ((cell % 7) === 0 || (cell % 7) === 6);
-    var isLast = (cell % 7 === 6);
-
-    var cellBg = isWeekend ? 'var(--bg-secondary)' : 'var(--bg-card)';
-    var dayNumStyle = isToday
-      ? 'width:24px;height:24px;background:var(--gold);color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;'
-      : 'font-size:12px;color:' + (isWeekend ? 'var(--text-tertiary)' : 'var(--text-secondary)') + ';font-weight:' + (flights.length ? '600' : '400') + ';';
-
-    html += '<div style="min-height:90px;padding:6px 8px;border-right:' + (isLast ? 'none' : '0.5px solid var(--border)') + ';border-bottom:0.5px solid var(--border);background:' + cellBg + ';vertical-align:top;">';
-    html += '<div style="margin-bottom:4px;"><span style="' + dayNumStyle + '">' + day + '</span></div>';
-
-    flights.forEach(function(q) {
-      var qr = q.queries || {};
-      var dep = qr.departure || '';
-      var dest = qr.destination || '';
-      var time = qr.flight_time || '';
-      var ac = q.aircraft_type || '';
-      var col = getColor(ac);
-      html += '<div style="background:' + col.bg + ';border-left:2px solid ' + col.border + ';border-radius:3px;padding:3px 6px;margin-bottom:3px;cursor:default;" title="' + dep + ' to ' + dest + ' | ' + ac + ' ' + q.aircraft_registration + ' | ' + time + '">'
-            + '<div style="font-size:10px;font-weight:600;color:' + col.text + ';white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + dep + ' &#8594; ' + dest + '</div>'
-            + '<div style="font-size:9px;color:' + col.text + ';opacity:0.8;">' + time + ' &#183; ' + q.aircraft_registration + '</div>'
-            + '</div>';
-    });
-
-    html += '</div>';
-
-    if (cell % 7 === 6 && day < daysInMonth) {
-      html += '</div><div style="display:grid;grid-template-columns:repeat(7,1fr);gap:0;">';
-    }
-  }
-
-  // Trailing empty cells
-  var remaining = 6 - (cell - 1) % 7;
-  if (remaining < 6) {
-    for (var j = 0; j < remaining; j++) {
-      html += '<div style="min-height:90px;padding:8px;border-right:' + (j === remaining-1 ? 'none' : '0.5px solid var(--border)') + ';border-bottom:0.5px solid var(--border);background:var(--bg-secondary);opacity:0.5;"></div>';
-    }
-  }
-
-  html += '</div>';
-
-  // Legend
-  html += '<div style="padding:14px 24px;border-top:0.5px solid var(--border);display:flex;gap:16px;flex-wrap:wrap;">';
-  Object.keys(acColors).forEach(function(ac) {
-    var col = acColors[ac];
-    html += '<div style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text-secondary);">'
-          + '<div style="width:10px;height:10px;border-radius:2px;background:' + col.bg + ';border:1.5px solid ' + col.border + ';"></div>'
-          + ac + '</div>';
-  });
-  html += '</div>';
-
-  html += '</div>';
-  el.innerHTML = html;
-}
-
-function calNav(dir) {
-  window._calMonth += dir;
-  if (window._calMonth > 11) { window._calMonth = 0; window._calYear++; }
-  if (window._calMonth < 0)  { window._calMonth = 11; window._calYear--; }
-  renderCalendar(window._calYear, window._calMonth, window._calFlights);
-}
-
 
 async function loadFleet() {
   var res = await sbFetch('aircraft?operator_id=eq.' + currentOperator.id + '&is_active=eq.true&order=created_at.asc');
@@ -1414,28 +1325,19 @@ document.addEventListener('click', async function(e) {
 });
 
 
-function applyRoleRestrictions(){
+function applyRoleRestrictions() {
   var isEmp = currentUser && currentUser.role === 'employee';
-  // Inject Revenue nav if not present
-  if (!document.getElementById('nav-revenue')) {
-    var empNav = document.getElementById('nav-employees');
-    if (empNav) {
-      var revNav = document.createElement('div');
-      revNav.className = 'nav-item';
-      revNav.id = 'nav-revenue';
-      revNav.setAttribute('onclick', "showTab('revenue')");
-      revNav.innerHTML = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg> Revenue';
-      empNav.parentNode.insertBefore(revNav, empNav.nextSibling);
-    }
-  }
-  var allNavItems = document.querySelectorAll('.nav-item');
-  allNavItems.forEach(function(el){
+  // Items only owners can see
+  var ownerOnlyIds = ['nav-revenue'];
+  var ownerOnlyKeywords = ['fleet', 'employees', 'roster'];
+  document.querySelectorAll('.nav-item').forEach(function(el) {
     var oc = el.getAttribute('onclick') || '';
-    var navId = el.id || '';
-    var isRestricted = oc.indexOf('fleet') > -1 || oc.indexOf('employees') > -1 || oc.indexOf('roster') > -1 || navId === 'nav-employees' || navId === 'nav-revenue';
-    if(isRestricted) el.style.display = isEmp ? 'none' : 'flex';
+    var id = el.id || '';
+    var restricted = ownerOnlyIds.indexOf(id) > -1 ||
+      ownerOnlyKeywords.some(function(k) { return oc.indexOf(k) > -1; }) ||
+      id === 'nav-employees';
+    if (restricted) el.style.display = isEmp ? 'none' : 'flex';
   });
-}
-</script>
+}</script>
 </body>
 </html>
