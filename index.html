@@ -769,6 +769,134 @@ async function submitEditedQuote() {
 }
 
 
+async function loadRevenue() {
+  var el = document.getElementById('revenue-content');
+  if (!el) return;
+  el.innerHTML = '<div class="loading">Loading...</div>';
+
+  // Fetch all confirmed quotes with query and user info
+  var res = await sbFetch('quotes?operator_id=eq.' + currentOperator.id + '&status=eq.confirmed&select=*,queries(*),operator_users(full_name,username)&order=created_at.desc');
+  var quotes = res.ok && res.data ? res.data : [];
+
+  if (!quotes.length) {
+    el.innerHTML = '<div class="empty-state"><div class="empty-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div><div class="empty-title">No confirmed bookings yet</div><div class="empty-sub">Revenue summary will appear here once bookings are confirmed</div></div>';
+    return;
+  }
+
+  var totalRevenue = quotes.reduce(function(s,q){ return s + parseFloat(q.price||0); }, 0);
+
+  // Section 1: Employee summary
+  var byEmployee = {};
+  quotes.forEach(function(q) {
+    var name = (q.operator_users && (q.operator_users.full_name || q.operator_users.username)) || 'Unknown';
+    if (!byEmployee[name]) byEmployee[name] = {count:0, revenue:0, flights:[]};
+    byEmployee[name].count++;
+    byEmployee[name].revenue += parseFloat(q.price||0);
+    var qr = q.queries || {};
+    byEmployee[name].flights.push((qr.departure||'-') + ' to ' + (qr.destination||'-') + ' on ' + (qr.flight_date||'-'));
+  });
+
+  var empRows = Object.keys(byEmployee).map(function(name) {
+    var e = byEmployee[name];
+    return '<tr>'
+      + '<td style="padding:12px 16px;font-weight:500;color:var(--text);">' + name + '</td>'
+      + '<td style="padding:12px 16px;text-align:center;color:var(--text-secondary);">' + e.count + '</td>'
+      + '<td style="padding:12px 16px;text-align:right;color:var(--gold);font-weight:600;">' + fmtPrice(e.revenue) + '</td>'
+      + '</tr>';
+  }).join('');
+
+  // Section 2: Revenue by aircraft
+  var byAircraft = {};
+  quotes.forEach(function(q) {
+    var ac = q.aircraft_type || 'Unknown';
+    var reg = q.aircraft_registration || '';
+    var key = ac + (reg ? ' (' + reg + ')' : '');
+    if (!byAircraft[key]) byAircraft[key] = {count:0, revenue:0};
+    byAircraft[key].count++;
+    byAircraft[key].revenue += parseFloat(q.price||0);
+  });
+
+  var acRows = Object.keys(byAircraft).sort(function(a,b){ return byAircraft[b].revenue - byAircraft[a].revenue; }).map(function(key) {
+    var a = byAircraft[key];
+    var pct = Math.round((a.revenue / totalRevenue) * 100);
+    return '<tr>'
+      + '<td style="padding:12px 16px;font-weight:500;color:var(--text);">' + key + '</td>'
+      + '<td style="padding:12px 16px;text-align:center;color:var(--text-secondary);">' + a.count + '</td>'
+      + '<td style="padding:12px 16px;">'
+      + '<div style="display:flex;align-items:center;gap:8px;">'
+      + '<div style="flex:1;background:var(--surface-secondary);border-radius:4px;height:6px;"><div style="background:var(--gold);border-radius:4px;height:6px;width:' + pct + '%;"></div></div>'
+      + '<span style="color:var(--gold);font-weight:600;min-width:80px;text-align:right;">' + fmtPrice(a.revenue) + '</span>'
+      + '</div></td></tr>';
+  }).join('');
+
+  // Section 3: Revenue by month/year
+  var byMonth = {};
+  quotes.forEach(function(q) {
+    var d = new Date(q.created_at);
+    var key = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0');
+    var label = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][d.getMonth()] + ' ' + d.getFullYear();
+    if (!byMonth[key]) byMonth[key] = {label:label, count:0, revenue:0};
+    byMonth[key].count++;
+    byMonth[key].revenue += parseFloat(q.price||0);
+  });
+
+  var maxMonthRevenue = Math.max.apply(null, Object.values(byMonth).map(function(m){ return m.revenue; }));
+  var monthRows = Object.keys(byMonth).sort().reverse().map(function(key) {
+    var m = byMonth[key];
+    var pct = Math.round((m.revenue / maxMonthRevenue) * 100);
+    return '<tr>'
+      + '<td style="padding:12px 16px;font-weight:500;color:var(--text);">' + m.label + '</td>'
+      + '<td style="padding:12px 16px;text-align:center;color:var(--text-secondary);">' + m.count + '</td>'
+      + '<td style="padding:12px 16px;">'
+      + '<div style="display:flex;align-items:center;gap:8px;">'
+      + '<div style="flex:1;background:var(--surface-secondary);border-radius:4px;height:6px;"><div style="background:var(--accent);border-radius:4px;height:6px;width:' + pct + '%;"></div></div>'
+      + '<span style="color:var(--text);font-weight:600;min-width:80px;text-align:right;">' + fmtPrice(m.revenue) + '</span>'
+      + '</div></td></tr>';
+  }).join('');
+
+  var tableStyle = 'width:100%;border-collapse:collapse;font-size:13px;';
+  var thStyle = 'padding:10px 16px;text-align:left;font-size:11px;font-weight:500;color:var(--text-tertiary);letter-spacing:.06em;text-transform:uppercase;border-bottom:0.5px solid var(--border);';
+  var cardStyle = 'background:var(--bg-card);border:0.5px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;margin-bottom:24px;';
+  var titleStyle = 'padding:16px 20px;border-bottom:0.5px solid var(--border);font-size:13px;font-weight:600;color:var(--text);display:flex;align-items:center;justify-content:space-between;';
+
+  // Total bar
+  var thisMonth = new Date().toISOString().substring(0,7);
+  var thisMonthKey = Object.keys(byMonth).find(function(k){ return k === thisMonth; });
+  var thisMonthRev = thisMonthKey ? byMonth[thisMonthKey].revenue : 0;
+
+  var html = '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:24px;">'
+    + '<div style="' + cardStyle.replace('margin-bottom:24px;','') + 'padding:20px;">'
+    + '<div style="font-size:11px;font-weight:500;color:var(--text-tertiary);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px;">Total Revenue</div>'
+    + '<div style="font-size:24px;font-weight:700;color:var(--gold);">' + fmtPrice(totalRevenue) + '</div>'
+    + '<div style="font-size:12px;color:var(--text-tertiary);margin-top:4px;">' + quotes.length + ' confirmed bookings</div></div>'
+    + '<div style="' + cardStyle.replace('margin-bottom:24px;','') + 'padding:20px;">'
+    + '<div style="font-size:11px;font-weight:500;color:var(--text-tertiary);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px;">This Month</div>'
+    + '<div style="font-size:24px;font-weight:700;color:var(--text);">' + fmtPrice(thisMonthRev) + '</div>'
+    + '<div style="font-size:12px;color:var(--text-tertiary);margin-top:4px;">' + (thisMonthKey ? byMonth[thisMonthKey].count : 0) + ' flights this month</div></div>'
+    + '<div style="' + cardStyle.replace('margin-bottom:24px;','') + 'padding:20px;">'
+    + '<div style="font-size:11px;font-weight:500;color:var(--text-tertiary);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px;">Avg Deal Size</div>'
+    + '<div style="font-size:24px;font-weight:700;color:var(--text);">' + fmtPrice(Math.round(totalRevenue / quotes.length)) + '</div>'
+    + '<div style="font-size:12px;color:var(--text-tertiary);margin-top:4px;">per confirmed booking</div></div>'
+    + '</div>'
+    + '<div style="' + cardStyle + '">'
+    + '<div style="' + titleStyle + '"><span>Employee Performance</span><span style="font-size:12px;font-weight:400;color:var(--text-tertiary);">' + Object.keys(byEmployee).length + ' team member' + (Object.keys(byEmployee).length !== 1 ? 's' : '') + '</span></div>'
+    + '<table style="' + tableStyle + '"><thead><tr>'
+    + '<th style="' + thStyle + '">Employee</th><th style="' + thStyle + 'text-align:center;">Flights Confirmed</th><th style="' + thStyle + 'text-align:right;">Revenue Generated</th>'
+    + '</tr></thead><tbody>' + empRows + '</tbody></table></div>'
+    + '<div style="' + cardStyle + '">'
+    + '<div style="' + titleStyle + '"><span>Revenue by Aircraft</span></div>'
+    + '<table style="' + tableStyle + '"><thead><tr>'
+    + '<th style="' + thStyle + '">Aircraft</th><th style="' + thStyle + 'text-align:center;">Flights</th><th style="' + thStyle + '">Revenue</th>'
+    + '</tr></thead><tbody>' + acRows + '</tbody></table></div>'
+    + '<div style="' + cardStyle + '">'
+    + '<div style="' + titleStyle + '"><span>Revenue by Month</span></div>'
+    + '<table style="' + tableStyle + '"><thead><tr>'
+    + '<th style="' + thStyle + '">Month</th><th style="' + thStyle + 'text-align:center;">Flights</th><th style="' + thStyle + '">Revenue</th>'
+    + '</tr></thead><tbody>' + monthRows + '</tbody></table></div>';
+
+  el.innerHTML = html;
+}
+
 function doLogout() {
   currentUser = null;
   currentOperator = null;
