@@ -910,7 +910,7 @@ function doLogout() {
 function showTab(tab) {
   var isEmployee=currentUser&&currentUser.role==='employee';
   if(isEmployee&&(tab==='fleet'||tab==='employees'||tab==='roster'))return;
-  ['active','quoted','shared','confirmed','roster','fleet','employees'].forEach(function(t) {
+  ['active','quoted','shared','confirmed','roster','fleet','employees','revenue'].forEach(function(t) {
     var el = document.getElementById('tab-' + t);
     if (el) el.style.display = 'none';
   });
@@ -921,6 +921,7 @@ function showTab(tab) {
   if (tab === 'fleet') loadFleet();
   if (tab === 'roster') loadRosterTab();
   if (tab === 'employees') loadEmployees();
+  if (tab === 'revenue') loadRevenue();
   if (tab === 'shared') renderSharedQueries();
   if (tab === 'confirmed') loadRoster();
 }
