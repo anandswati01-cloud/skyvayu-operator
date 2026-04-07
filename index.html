@@ -1347,6 +1347,53 @@ async function loadConfirmedTab() {
   }).join('');
 }
 
+
+function renderCalendar(year, month, flightsByDate) {
+  var el = document.getElementById('roster-list');
+  if (!el) return;
+  var monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  var acColors = {};
+  var colorList = ['#C4860A','#3B6D11','#185FA5','#8B2FC9','#C0392B','#1A7A8A'];
+  var colorIdx = 0;
+  function getColor(reg) {
+    if (!acColors[reg]) { acColors[reg] = colorList[colorIdx % colorList.length]; colorIdx++; }
+    return acColors[reg];
+  }
+  var allDates = Object.keys(flightsByDate).sort();
+  if (!allDates.length) {
+    el.innerHTML = '<div class="empty-state"><div class="empty-title">No flights this period</div></div>';
+    return;
+  }
+  var html = '<div class="calendar-header"><div class="calendar-month">' + monthNames[month] + ' ' + year + '</div></div>';
+  html += '<div class="timeline">';
+  allDates.forEach(function(dateStr) {
+    var flights = flightsByDate[dateStr];
+    var d = new Date(dateStr + 'T00:00:00');
+    var dayNames = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+    html += '<div class="timeline-day">';
+    html += '<div class="timeline-date"><div class="timeline-day-num">' + d.getDate() + '</div><div class="timeline-day-name">' + dayNames[d.getDay()] + '</div></div>';
+    html += '<div class="timeline-flights">';
+    flights.forEach(function(q) {
+      var qr = q.queries || {};
+      var route = qr.trip_type === 'multi' ? 'Multiple sectors' : (qr.departure || '-') + ' to ' + (qr.destination || '-');
+      var reg = q.aircraft_registration || q.aircraft_type || 'Unknown';
+      var color = getColor(reg);
+      html += '<div class="roster-card" style="border-left:3px solid ' + color + ';margin-bottom:10px;">';
+      html += '<div class="roster-flight"><div><div class="roster-route">' + route + '</div>';
+      html += '<div class="roster-meta">' + (qr.flight_time || '') + (qr.flight_time ? ' &nbsp;|&nbsp; ' : '') + (q.aircraft_type || '') + ' &nbsp; ' + reg + '</div></div>';
+      html += '<span class="roster-confirmed-badge">Confirmed</span></div>';
+      html += '<div class="roster-crew"><div class="roster-crew-title">Crew assignment</div>';
+      html += '<div class="crew-grid"><div class="crew-field"><label>Pilot in Command</label><input type="text" placeholder="Name..."/></div>';
+      html += '<div class="crew-field"><label>Co-Pilot</label><input type="text" placeholder="Name..."/></div>';
+      html += '<div class="crew-field"><label>Cabin Crew</label><input type="text" placeholder="Name..."/></div></div>';
+      html += '<div class="roster-save"><button class="btn-sm btn-outline-sm">Save crew</button></div></div></div>';
+    });
+    html += '</div></div>';
+  });
+  html += '</div>';
+  el.innerHTML = html;
+}
+
 function applyRoleRestrictions() {
   var isEmp = currentUser && currentUser.role === 'employee';
   // Items only owners can see
