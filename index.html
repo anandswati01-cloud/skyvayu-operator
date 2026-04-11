@@ -685,7 +685,7 @@ async function sendQueryNotification(query) {
       + '<a href="https://skyvayu-operator.vercel.app" style="display:inline-block;background:#C4860A;color:#fff;text-decoration:none;padding:12px 24px;border-radius:8px;font-size:14px;font-weight:500;">Go to Dashboard</a>'
       + '<div style="font-size:11px;color:#8A7560;margin-top:20px;">Log in to submit your quote before it expires.</div>'
       + '</div>';
-    await fetch('https://bkumggqijgxyfotpbcni.supabase.co/functions/v1/send-notification', {
+    await fetch('https://bkumggqijgxyfotpbcni.supabase.co/functions/v1/fix-portal', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + SUPABASE_KEY },
       body: JSON.stringify({ to: notifEmail, subject: 'New query: ' + route, html: htmlBody })
