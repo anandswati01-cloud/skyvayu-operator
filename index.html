@@ -1382,7 +1382,7 @@ function renderCalendar(year, month, flightsByDate) {
     var hasFlight = flights.length > 0;
     var cellBg = hasFlight ? 'var(--bg-card)' : 'transparent';
     var cellBorder = isToday ? '0.5px solid var(--gold)' : hasFlight ? '0.5px solid var(--border)' : '0.5px solid transparent';
-    html += '<div style="min-height:80px;border-radius:var(--radius);border:' + cellBorder + ';background:' + cellBg + ';padding:6px;cursor:' + (hasFlight ? 'pointer' : 'default') + ';" onclick="calDayClick(' + JSON.stringify(dateStr) + ')">';
+    html += '<div style="min-height:80px;border-radius:var(--radius);border:' + cellBorder + ';background:' + cellBg + ';padding:6px;cursor:' + (hasFlight ? 'pointer' : 'default') + ';" onclick="calDayClick(\'' + dateStr + '\')">';
     html += '<div style="font-size:12px;font-weight:' + (isToday ? '600' : '400') + ';color:' + (isToday ? 'var(--gold)' : 'var(--text-secondary)') + ';margin-bottom:4px;">' + day + '</div>';
     flights.forEach(function(q) {
       var qr = q.queries || {};
@@ -1423,16 +1423,17 @@ function calDayClick(dateStr) {
   if (!det) return;
   var flights = (window._calFlights || {})[dateStr] || [];
   if (!flights.length) { det.innerHTML = ''; return; }
-  var colorPalette2 = ['#C4860A','#3B6D11','#185FA5','#8B2FC9','#C0392B','#1A7A8A'];
-  var acColors2 = {}; var ci2 = 0;
-  function gc2(reg) { if (!acColors2[reg]) { acColors2[reg] = colorPalette2[ci2 % colorPalette2.length]; ci2++; } return acColors2[reg]; }
-  var dp = dateStr.split('-'); var dLabel = dp[2] + '-' + dp[1] + '-' + dp[0];
+  var cp = ['#C4860A','#3B6D11','#185FA5','#8B2FC9','#C0392B','#1A7A8A'];
+  var ac = {}; var ci = 0;
+  function gc(reg) { if (!ac[reg]) { ac[reg] = cp[ci % cp.length]; ci++; } return ac[reg]; }
+  var dp = dateStr.split('-');
+  var dLabel = dp[2] + '-' + dp[1] + '-' + dp[0];
   var html = '<div style="font-size:11px;font-weight:500;color:var(--text-tertiary);letter-spacing:.07em;text-transform:uppercase;margin-bottom:12px;">' + dLabel + '</div>';
   flights.forEach(function(q) {
     var qr = q.queries || {};
     var route = qr.trip_type === 'multi' ? 'Multiple sectors' : (qr.departure || '-') + ' to ' + (qr.destination || '-');
     var reg = q.aircraft_registration || q.aircraft_type || 'Unknown';
-    var color = gc2(reg);
+    var color = gc(reg);
     html += '<div class="roster-card" style="border-left:3px solid ' + color + ';margin-bottom:12px;">';
     html += '<div class="roster-flight"><div><div class="roster-route">' + route + '</div>';
     html += '<div class="roster-meta">' + (qr.flight_time ? qr.flight_time + ' &nbsp;|&nbsp; ' : '') + (q.aircraft_type || '') + ' &nbsp; ' + reg + '</div></div>';
