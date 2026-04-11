@@ -1383,7 +1383,7 @@ function renderCalendar(year, month, flightsByDate) {
     var hasFlight = flights.length > 0;
     var cellBg = hasFlight ? 'var(--bg-card)' : 'transparent';
     var cellBorder = isToday ? '0.5px solid var(--gold)' : hasFlight ? '0.5px solid var(--border)' : '0.5px solid transparent';
-    html += '<div style="min-height:80px;border-radius:var(--radius);border:' + cellBorder + ';background:' + cellBg + ';padding:6px;cursor:' + (hasFlight ? 'pointer' : 'default') + ';" onclick="calDayClick(' + dateStr + ')">';
+    html += '<div style="min-height:80px;border-radius:var(--radius);border:' + cellBorder + ';background:' + cellBg + ';padding:6px;cursor:' + (hasFlight ? 'pointer' : 'default') + ';" onclick="calDayClick(' + JSON.stringify(dateStr) + ')">';
     html += '<div style="font-size:12px;font-weight:' + (isToday ? '600' : '400') + ';color:' + (isToday ? 'var(--gold)' : 'var(--text-secondary)') + ';margin-bottom:4px;">' + day + '</div>';
     flights.forEach(function(q) {
       var qr = q.queries || {};
