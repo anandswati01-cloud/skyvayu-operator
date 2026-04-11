@@ -672,21 +672,27 @@ async function sendQueryNotification(query) {
     var notifEmail = op && op.notification_email;
     if (!notifEmail) { console.log('[Query notification - no email set]'); return; }
     var route = query.trip_type === 'multi' ? 'Multiple sectors' : (query.departure || '-') + ' to ' + (query.destination || '-');
-    var message = 'New query: ' + route + '. Date: ' + (query.flight_date || '-') + (query.flight_time ? ' at ' + query.flight_time : '') + '. Pax: ' + (query.passengers || '-') + '. Log in to quote before it expires.';
-    await fetch('https://api.emailjs.com/api/v1.0/email/send', {
+    var htmlBody = '<div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:24px;">'
+      + '<div style="font-size:11px;letter-spacing:3px;color:#8A7560;text-transform:uppercase;margin-bottom:4px;">SkyVayu</div>'
+      + '<div style="font-size:22px;font-weight:300;color:#C4860A;margin-bottom:20px;">New query received</div>'
+      + '<div style="background:#FAF7F2;border:0.5px solid #e0d8cc;border-radius:8px;padding:16px 20px;margin-bottom:20px;">'
+      + '<div style="font-size:16px;font-weight:500;color:#1C1410;margin-bottom:8px;">' + route + '</div>'
+      + '<div style="font-size:13px;color:#6B5940;">Date: ' + (query.flight_date || '-') + (query.flight_time ? ' at ' + query.flight_time : '') + '</div>'
+      + '<div style="font-size:13px;color:#6B5940;">Passengers: ' + (query.passengers || '-') + '</div>'
+      + (query.medivac ? '<div style="font-size:13px;color:#6B5940;">Medivac: Yes</div>' : '')
+      + (query.pets ? '<div style="font-size:13px;color:#6B5940;">Pets: Yes</div>' : '')
+      + '</div>'
+      + '<a href="https://skyvayu-operator.vercel.app" style="display:inline-block;background:#C4860A;color:#fff;text-decoration:none;padding:12px 24px;border-radius:8px;font-size:14px;font-weight:500;">Go to Dashboard</a>'
+      + '<div style="font-size:11px;color:#8A7560;margin-top:20px;">Log in to submit your quote before it expires.</div>'
+      + '</div>';
+    await fetch('https://api.resend.com/emails', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer re_A3qRrGA6_4Xjv5wUna7THJ85NTHfgjoKt' },
       body: JSON.stringify({
-        service_id: EMAILJS_SERVICE_ID,
-        template_id: EMAILJS_QUERY_TEMPLATE,
-        user_id: EMAILJS_PUBLIC_KEY,
-        template_params: {
-          to_name: op.company_name || 'Operator',
-          to_email: notifEmail,
-          subject: 'New query: ' + route,
-          message: message,
-          portal_url: 'https://skyvayu-operator.vercel.app'
-        }
+        from: 'SkyVayu Portal <onboarding@resend.dev>',
+        to: [notifEmail],
+        subject: 'New query: ' + route,
+        html: htmlBody
       })
     });
     console.log('Query notification sent to', notifEmail);
