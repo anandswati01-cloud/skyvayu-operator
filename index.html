@@ -269,6 +269,9 @@ textarea.field-input{height:80px;padding:10px 14px;resize:vertical;}
       </div>
     </div>
     <button class="btn-primary" id="login-btn" onclick="doLogin()">Sign in</button>
+    <div style="text-align:center;margin-top:16px;">
+      <button onclick="document.getElementById('register-modal').classList.add('open')" style="background:none;border:none;color:var(--text-tertiary);font-size:12px;cursor:pointer;">New operator? <span style="color:var(--gold);text-decoration:underline;">Register your company</span></button>
+    </div>
     <div id="otp-section" style="display:none;margin-top:16px;">
       <div class="field-group" style="margin-bottom:12px;">
         <label class="field-label">Verification code</label>
@@ -628,11 +631,29 @@ async function doLogin() {
     var user = userRes.data[0];
     if (!user.is_active) throw new Error('inactive');
     if ((user.password_hash||'').trim().replace(/^"|"$/g,'') !== (password||'').trim()) throw new Error('bad');
+    // Super admin
+    if (user.role === 'super_admin') {
+      currentUser = user;
+      document.getElementById('page-login').style.display = 'none';
+      document.getElementById('page-admin').style.display = 'block';
+      loadAdminPanel();
+      btn.disabled = false; btn.textContent = 'Sign in';
+      return;
+    }
+    // Regular operator user
     var opRes = await sbFetch('operators?id=eq.' + user.operator_id);
     if (!opRes.ok || !opRes.data || !opRes.data.length) throw new Error('no op');
+    var op = opRes.data[0];
+    if (op.approval_status === 'pending') {
+      document.getElementById('page-login').style.display = 'none';
+      document.getElementById('page-pending').style.display = 'flex';
+      btn.disabled = false; btn.textContent = 'Sign in';
+      return;
+    }
+    if (op.approval_status === 'rejected') { errEl.textContent = 'Your registration was not approved. Contact SkyVayu support.'; errEl.classList.add('show'); btn.disabled = false; btn.textContent = 'Sign in'; return; }
     currentUser = user;
-    currentOperator = opRes.data[0];
-    sbFetch('operator_users?id=eq.' + currentUser.id, { method:'PATCH', body:{ last_login: new Date().toISOString() } });
+    currentOperator = op;
+    sbFetch('operator_users?id=eq.' + currentUser.id, {method:'PATCH', body:{last_login: new Date().toISOString()}});
     document.getElementById('page-login').style.display = 'none';
     document.getElementById('page-dashboard').classList.add('active');
     document.getElementById('sidebar-name').textContent = currentUser.full_name || currentUser.username;
@@ -901,6 +922,124 @@ async function loadRevenue() {
     + '</tr></thead><tbody>' + monthRows + '</tbody></table></div>';
 
   el.innerHTML = html;
+}
+
+async function submitRegistration() {
+  var company = document.getElementById('reg-company').value.trim();
+  var name    = document.getElementById('reg-name').value.trim();
+  var username= document.getElementById('reg-username').value.trim();
+  var password= document.getElementById('reg-password').value;
+  var phone   = document.getElementById('reg-phone').value.trim();
+  var errEl   = document.getElementById('reg-error');
+  errEl.classList.remove('show');
+  if (!company||!name||!username||!password) { errEl.textContent='Please fill in all fields'; errEl.classList.add('show'); return; }
+  // Check username not taken
+  var check = await sbFetch('operator_users?username=eq.' + encodeURIComponent(username));
+  if (check.ok && check.data && check.data.length) { errEl.textContent='Username already taken'; errEl.classList.add('show'); return; }
+  // Create operator (pending)
+  var opRes = await sbFetch('operators', {method:'POST', prefer:'return=representation', body:{company_name:company, owner_name:name, owner_phone:phone, approval_status:'pending'}});
+  if (!opRes.ok || !opRes.data || !opRes.data.length) { errEl.textContent='Registration failed. Please try again.'; errEl.classList.add('show'); return; }
+  var opId = opRes.data[0].id;
+  // Create owner user
+  var userRes = await sbFetch('operator_users', {method:'POST', body:{operator_id:opId, full_name:name, username:username, password_hash:password, role:'owner', phone:phone, is_active:true}});
+  if (!userRes.ok) { errEl.textContent='Failed to create account. Please try again.'; errEl.classList.add('show'); return; }
+  closeModal('register-modal');
+  document.getElementById('page-login').style.display = 'none';
+  document.getElementById('page-pending').style.display = 'flex';
+}
+
+async function loadAdminPanel() {
+  // Stats
+  var opsRes  = await sbFetch('operators?order=created_at.desc');
+  var allOps  = opsRes.ok ? opsRes.data : [];
+  var pending = allOps.filter(function(o){ return o.approval_status==='pending'; });
+  var approved= allOps.filter(function(o){ return o.approval_status==='approved'; });
+  var statsEl = document.getElementById('admin-stats');
+  var cardS   = 'background:var(--bg-card);border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:20px;';
+  statsEl.innerHTML =
+    '<div style="'+cardS+'"><div style="font-size:11px;color:var(--text-tertiary);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;">Total Operators</div><div style="font-size:28px;font-weight:700;color:var(--gold);">'+allOps.length+'</div></div>'+
+    '<div style="'+cardS+'"><div style="font-size:11px;color:var(--text-tertiary);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;">Pending Approval</div><div style="font-size:28px;font-weight:700;color:var(--amber);">'+pending.length+'</div></div>'+
+    '<div style="'+cardS+'"><div style="font-size:11px;color:var(--text-tertiary);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;">Active Operators</div><div style="font-size:28px;font-weight:700;color:var(--green-light);">'+approved.length+'</div></div>';
+  // Pending
+  var pendEl = document.getElementById('admin-pending');
+  if (!pending.length) {
+    pendEl.innerHTML = '<div class="empty-state"><div class="empty-title">No pending registrations</div></div>';
+  } else {
+    pendEl.innerHTML = '<table style="width:100%;border-collapse:collapse;font-size:13px;">'+
+      '<thead><tr>'+
+      '<th style="padding:10px 16px;text-align:left;font-size:11px;color:var(--text-tertiary);text-transform:uppercase;border-bottom:0.5px solid var(--border);">Company</th>'+
+      '<th style="padding:10px 16px;text-align:left;font-size:11px;color:var(--text-tertiary);text-transform:uppercase;border-bottom:0.5px solid var(--border);">Owner</th>'+
+      '<th style="padding:10px 16px;text-align:left;font-size:11px;color:var(--text-tertiary);text-transform:uppercase;border-bottom:0.5px solid var(--border);">Phone</th>'+
+      '<th style="padding:10px 16px;text-align:left;font-size:11px;color:var(--text-tertiary);text-transform:uppercase;border-bottom:0.5px solid var(--border);">Registered</th>'+
+      '<th style="padding:10px 16px;text-align:left;font-size:11px;color:var(--text-tertiary);text-transform:uppercase;border-bottom:0.5px solid var(--border);">Action</th>'+
+      '</tr></thead><tbody>'+
+      pending.map(function(op){
+        var d = op.created_at ? new Date(op.created_at).toLocaleDateString('en-IN') : '-';
+        return '<tr>'+
+          '<td style="padding:12px 16px;font-weight:500;color:var(--text);">'+op.company_name+'</td>'+
+          '<td style="padding:12px 16px;color:var(--text-secondary);">'+( op.owner_name||'-')+'</td>'+
+          '<td style="padding:12px 16px;color:var(--text-secondary);">'+( op.owner_phone||'-')+'</td>'+
+          '<td style="padding:12px 16px;color:var(--text-tertiary);">'+d+'</td>'+
+          '<td style="padding:12px 16px;display:flex;gap:8px;">'+
+          '<button onclick="approveOperator(''+op.id+'')" style="height:30px;padding:0 14px;background:var(--green-faint);border:0.5px solid rgba(59,109,17,0.3);border-radius:6px;color:var(--green-light);font-size:12px;cursor:pointer;font-weight:500;">Approve</button>'+
+          '<button onclick="rejectOperator(''+op.id+'')" style="height:30px;padding:0 14px;background:var(--red-faint);border:0.5px solid rgba(192,57,43,0.3);border-radius:6px;color:var(--red);font-size:12px;cursor:pointer;font-weight:500;">Reject</button>'+
+          '</td></tr>';
+      }).join('')+
+      '</tbody></table>';
+  }
+  // All operators
+  var opsEl = document.getElementById('admin-operators');
+  var approved2 = allOps.filter(function(o){ return o.approval_status!=='pending'; });
+  if (!approved2.length) {
+    opsEl.innerHTML = '<div class="empty-state"><div class="empty-title">No operators yet</div></div>';
+  } else {
+    opsEl.innerHTML = '<table style="width:100%;border-collapse:collapse;font-size:13px;">'+
+      '<thead><tr>'+
+      '<th style="padding:10px 16px;text-align:left;font-size:11px;color:var(--text-tertiary);text-transform:uppercase;border-bottom:0.5px solid var(--border);">Company</th>'+
+      '<th style="padding:10px 16px;text-align:left;font-size:11px;color:var(--text-tertiary);text-transform:uppercase;border-bottom:0.5px solid var(--border);">Owner</th>'+
+      '<th style="padding:10px 16px;text-align:left;font-size:11px;color:var(--text-tertiary);text-transform:uppercase;border-bottom:0.5px solid var(--border);">Status</th>'+
+      '<th style="padding:10px 16px;text-align:left;font-size:11px;color:var(--text-tertiary);text-transform:uppercase;border-bottom:0.5px solid var(--border);">Action</th>'+
+      '</tr></thead><tbody>'+
+      approved2.map(function(op){
+        var isActive = op.approval_status==='approved';
+        var badge = isActive
+          ? '<span style="background:var(--green-faint);color:var(--green-light);border:0.5px solid rgba(59,109,17,0.3);font-size:10px;padding:2px 8px;border-radius:10px;">Active</span>'
+          : '<span style="background:var(--red-faint);color:var(--red);border:0.5px solid rgba(192,57,43,0.3);font-size:10px;padding:2px 8px;border-radius:10px;">Rejected</span>';
+        return '<tr>'+
+          '<td style="padding:12px 16px;font-weight:500;color:var(--text);">'+op.company_name+'</td>'+
+          '<td style="padding:12px 16px;color:var(--text-secondary);">'+( op.owner_name||'-')+'</td>'+
+          '<td style="padding:12px 16px;">'+badge+'</td>'+
+          '<td style="padding:12px 16px;">'+
+          (isActive
+            ? '<button onclick="deactivateOperator(''+op.id+'')" style="height:30px;padding:0 14px;background:var(--red-faint);border:0.5px solid rgba(192,57,43,0.3);border-radius:6px;color:var(--red);font-size:12px;cursor:pointer;">Deactivate</button>'
+            : '<button onclick="approveOperator(''+op.id+'')" style="height:30px;padding:0 14px;background:var(--green-faint);border:0.5px solid rgba(59,109,17,0.3);border-radius:6px;color:var(--green-light);font-size:12px;cursor:pointer;">Re-activate</button>'
+          )+'</td></tr>';
+      }).join('')+
+      '</tbody></table>';
+  }
+}
+
+async function approveOperator(id) {
+  await sbFetch('operators?id=eq.'+id, {method:'PATCH', body:{approval_status:'approved'}});
+  showToast('Operator approved', 'success');
+  loadAdminPanel();
+}
+async function rejectOperator(id) {
+  if (!confirm('Reject this registration?')) return;
+  await sbFetch('operators?id=eq.'+id, {method:'PATCH', body:{approval_status:'rejected'}});
+  showToast('Registration rejected', 'success');
+  loadAdminPanel();
+}
+async function deactivateOperator(id) {
+  if (!confirm('Deactivate this operator? They will not be able to log in.')) return;
+  await sbFetch('operators?id=eq.'+id, {method:'PATCH', body:{approval_status:'rejected'}});
+  showToast('Operator deactivated', 'success');
+  loadAdminPanel();
+}
+function adminLogout() {
+  currentUser = null;
+  document.getElementById('page-admin').style.display = 'none';
+  document.getElementById('page-login').style.display = 'flex';
 }
 
 function doLogout() {
@@ -1462,5 +1601,71 @@ function applyRoleRestrictions() {
     if (restricted) el.style.display = isEmp ? 'none' : 'flex';
   });
 }</script>
+
+<!-- Register Modal -->
+<div class="modal-overlay" id="register-modal">
+  <div class="modal" style="max-width:480px;">
+    <div class="modal-header">
+      <span class="modal-title">Register your company</span>
+      <button class="modal-close" onclick="closeModal('register-modal')">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="field-group">
+        <label class="field-label">Company name</label>
+        <input type="text" class="field-input" id="reg-company" placeholder="e.g. Club One Air Pvt Ltd"/>
+      </div>
+      <div class="field-group">
+        <label class="field-label">Your full name</label>
+        <input type="text" class="field-input" id="reg-name" placeholder="Owner / Director name"/>
+      </div>
+      <div class="field-group">
+        <label class="field-label">Choose username</label>
+        <input type="text" class="field-input" id="reg-username" placeholder="Used to log in"/>
+      </div>
+      <div class="field-group">
+        <label class="field-label">Password</label>
+        <input type="password" class="field-input" id="reg-password" placeholder="Set a password"/>
+      </div>
+      <div class="field-group">
+        <label class="field-label">Phone number</label>
+        <input type="text" class="field-input" id="reg-phone" placeholder="10-digit mobile number"/>
+      </div>
+      <div id="reg-error" class="login-error"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-sm btn-outline-sm" onclick="closeModal('register-modal')">Cancel</button>
+      <button class="btn-sm btn-blue" onclick="submitRegistration()">Submit registration</button>
+    </div>
+  </div>
+</div>
+
+<!-- Pending Approval Screen -->
+<div id="page-pending" style="display:none;min-height:100vh;align-items:center;justify-content:center;background:var(--bg);padding:24px;">
+  <div style="text-align:center;max-width:400px;">
+    <div style="font-family:var(--font-display);font-size:28px;color:var(--gold);margin-bottom:12px;">Registration submitted</div>
+    <div style="font-size:14px;color:var(--text-secondary);line-height:1.7;margin-bottom:24px;">Your company registration is under review. You will be able to log in once approved by the SkyVayu team. This usually takes less than 24 hours.</div>
+    <button class="btn-primary" style="width:auto;padding:0 24px;" onclick="document.getElementById('page-pending').style.display='none';document.getElementById('page-login').style.display='flex';">Back to login</button>
+  </div>
+</div>
+
+<!-- Super Admin Panel -->
+<div id="page-admin" style="display:none;min-height:100vh;background:var(--bg);">
+  <div style="background:var(--bg-card);border-bottom:0.5px solid var(--border);padding:16px 28px;display:flex;align-items:center;justify-content:space-between;">
+    <div style="font-family:var(--font-display);font-size:20px;color:var(--gold);">SkyVayu Admin Panel</div>
+    <button onclick="adminLogout()" class="btn-logout" style="width:auto;padding:0 16px;">Sign out</button>
+  </div>
+  <div style="padding:28px;max-width:1000px;margin:0 auto;">
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:28px;" id="admin-stats"></div>
+    <div style="background:var(--bg-card);border:0.5px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;margin-bottom:24px;">
+      <div style="padding:16px 20px;border-bottom:0.5px solid var(--border);font-size:13px;font-weight:600;color:var(--text);">Pending Approvals</div>
+      <div id="admin-pending"><div class="loading">Loading...</div></div>
+    </div>
+    <div style="background:var(--bg-card);border:0.5px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;">
+      <div style="padding:16px 20px;border-bottom:0.5px solid var(--border);font-size:13px;font-weight:600;color:var(--text);">All Operators</div>
+      <div id="admin-operators"><div class="loading">Loading...</div></div>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>
