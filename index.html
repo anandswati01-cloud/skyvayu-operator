@@ -548,6 +548,38 @@ textarea.field-input{height:80px;padding:10px 14px;resize:vertical;}
         <input type="number" class="field-input" id="ac-seats" placeholder="e.g. 8" min="1" max="50"/>
       </div>
     </div>
+      <div class="form-group" style="margin-top:1.5rem;">
+        <label class="form-label" style="text-transform:uppercase;letter-spacing:.06em;font-size:.7rem;color:var(--gold);margin-bottom:.75rem;display:block;">CABIN AMENITIES</label>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem .75rem;">
+          <label style="display:flex;align-items:center;gap:.5rem;cursor:pointer;font-size:.85rem;color:var(--text-muted);">
+            <input type="checkbox" id="am-wifi" style="width:15px;height:15px;accent-color:var(--gold);cursor:pointer;"> In-flight Wi-Fi
+          </label>
+          <label style="display:flex;align-items:center;gap:.5rem;cursor:pointer;font-size:.85rem;color:var(--text-muted);">
+            <input type="checkbox" id="am-oven" style="width:15px;height:15px;accent-color:var(--gold);cursor:pointer;"> Oven
+          </label>
+          <label style="display:flex;align-items:center;gap:.5rem;cursor:pointer;font-size:.85rem;color:var(--text-muted);">
+            <input type="checkbox" id="am-microwave" style="width:15px;height:15px;accent-color:var(--gold);cursor:pointer;"> Microwave
+          </label>
+          <label style="display:flex;align-items:center;gap:.5rem;cursor:pointer;font-size:.85rem;color:var(--text-muted);">
+            <input type="checkbox" id="am-coffee" style="width:15px;height:15px;accent-color:var(--gold);cursor:pointer;"> Coffee Machine
+          </label>
+          <label style="display:flex;align-items:center;gap:.5rem;cursor:pointer;font-size:.85rem;color:var(--text-muted);">
+            <input type="checkbox" id="am-flatbed" style="width:15px;height:15px;accent-color:var(--gold);cursor:pointer;"> Lie-flat / Sleeper Seats
+          </label>
+          <label style="display:flex;align-items:center;gap:.5rem;cursor:pointer;font-size:.85rem;color:var(--text-muted);">
+            <input type="checkbox" id="am-lavatory" style="width:15px;height:15px;accent-color:var(--gold);cursor:pointer;"> Lavatory
+          </label>
+          <label style="display:flex;align-items:center;gap:.5rem;cursor:pointer;font-size:.85rem;color:var(--text-muted);">
+            <input type="checkbox" id="am-satphone" style="width:15px;height:15px;accent-color:var(--gold);cursor:pointer;"> Satellite Phone
+          </label>
+          <label style="display:flex;align-items:center;gap:.5rem;cursor:pointer;font-size:.85rem;color:var(--text-muted);">
+            <input type="checkbox" id="am-entertainment" style="width:15px;height:15px;accent-color:var(--gold);cursor:pointer;"> Entertainment System
+          </label>
+          <label style="display:flex;align-items:center;gap:.5rem;cursor:pointer;font-size:.85rem;color:var(--text-muted);">
+            <input type="checkbox" id="am-nonsmoking" style="width:15px;height:15px;accent-color:var(--gold);cursor:pointer;"> Non-smoking
+          </label>
+        </div>
+      </div>
     <div class="modal-footer">
       <button class="btn-sm btn-outline-sm" onclick="closeModal('aircraft-modal')">Cancel</button>
       <button class="btn-sm btn-blue" onclick="saveAircraft()">Add aircraft</button>
@@ -1263,12 +1295,14 @@ async function saveAircraft() {
   var seats = parseInt(document.getElementById('ac-seats').value) || null;
   if (!type || !reg) { showToast('Please enter aircraft type and registration', 'error'); return; }
 
-  var res = await sbFetch('aircraft', { method:'POST', body:{ operator_id: currentOperator.id, aircraft_type: type, registration: reg, seats: seats }, prefer:'return=representation' });
+    const amenities = { wifi: document.getElementById('am-wifi').checked, oven: document.getElementById('am-oven').checked, microwave: document.getElementById('am-microwave').checked, coffee: document.getElementById('am-coffee').checked, flatbed: document.getElementById('am-flatbed').checked, lavatory: document.getElementById('am-lavatory').checked, satphone: document.getElementById('am-satphone').checked, entertainment: document.getElementById('am-entertainment').checked, nonsmoking: document.getElementById('am-nonsmoking').checked };
+  var res = await sbFetch('aircraft', { method:'POST', body:{ operator_id: currentOperator.id, aircraft_type: type, registration: reg, seats: seats, amenities: amenities }, prefer:'return=representation' });
   if (res.ok) {
     closeModal('aircraft-modal');
     document.getElementById('ac-type').value = '';
     document.getElementById('ac-reg').value = '';
     document.getElementById('ac-seats').value = '';
+    ['am-wifi','am-oven','am-microwave','am-coffee','am-flatbed','am-lavatory','am-satphone','am-entertainment','am-nonsmoking'].forEach(id => { const el = document.getElementById(id); if(el) el.checked = false; });
     loadFleet();
     showToast('Aircraft added successfully', 'success');
   } else {
